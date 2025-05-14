@@ -878,8 +878,8 @@ ORG $3000
 33A4 39		RTS        ------   Return from subroutine
 
 @33A5 subroutine
-33A5 8D 03	BSR r      ------   Branch to a subroutine
-33A7 8D 29	BSR r      ------   Branch to a subroutine
+33A5 8D 03	BSR @33AA  ------   Branch to a subroutine
+33A7 8D 29	BSR @33D2  ------   Branch to a subroutine
 33A9 39		RTS        ------   Return from subroutine
 
 @33AA subroutine
@@ -904,129 +904,71 @@ ORG $3000
 33D1 39		RTS        ------   Return from subroutine
 
 @33D2 subroutine
-33D2 CE
-33D3 01
-33D4 00
-33D5 6F
-33D6 00
-33D7 08
-33D8 8C
-33D9 02
-33DA 67
-33DB 26
-33DC F8
-33DD BD
-33DE 34
-33DF 4D
-33E0 4D
-33E1 27
-33E2 03
-33E3 BD
-33E4 34
-33E5 5D
-33E6 CE
-33E7 0F
-33E8 4D
-33E9 6F
-33EA 00
-33EB 08
-33EC 8C
-33ED 10
-33EE 48
-33EF 26
-33F0 F8
-33F1 86
-33F2 03
-33F3 C6
-33F4 06
-33F5 3A
-33F6 C6
-33F7 66
-33F8 6F
-33F9 00
-33FA 08
-33FB 5A
-33FC 26
-33FD FA
-33FE 4A
-33FF 26
-3400 F2
-3401 CE
-3402 11
-3403 8C
-3404 86
-3405 08
-3406 C6
-3407 0B
-3408 3A
-3409 C6
-340A F1
-340B 6F
-340C 00
-340D 08
-340E 5A
-340F 26
-3410 FA
-3411 4A
-3412 26
-3413 F2
-3414 CE
-3415 19
-3416 6C
-3417 6F
-3418 00
-3419 08
-341A 8C
-341B 1C
-341C 80
-341D 26
-341E F8
-341F C6
-3420 FF
-3421 3A
-3422 6F
-3423 00
-3424 08
-3425 8C
-3426 1F
-3427 F0
-3428 26
-3429 F8
-342A 86
-342B FF
-342C B7
-342D 19
-342E AA
-342F CE
-3430 1A
-3431 28
-3432 C6
-3433 06
-3434 86
-3435 08
-3436 A7
-3437 00
-3438 8B
-3439 10
-343A 3A
-343B 8C
-343C 1A
-343D 58
-343E 26
-343F F6
-3440 86
-3441 0C
-3442 A7
-3443 00
-3444 8B
-3445 10
-3446 3A
-3447 8C
-3448 1A
-3449 88
-344A 26
-344B F6
-344C 39
+33D2 CE 01 00	LDX ##     --XX0-   Loads X register with given word
+33D5 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+33D7 08		INX        ---X--   Increment X
+33D8 8C 02 67	CPX ##     --XXXX   Compare word to register X
+33DB 26 F8	BNE r      ------   Branch if not equal,    <>
+33DD BD	34 4D	JSR @344D  ------
+33E0 4D		TSTA       --XX00
+33E1 27 03	BEQ r      ------   Branch if equal,         =
+33E3 BD 34 5D	JSR @345D  ------
+33E6 CE 0F 4D	LDX ##     --XX0-   Loads X register with given word
+33E9 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+33EB 08		INX        ---X--   Increment X
+33EC 8C 10 48	CPX ##     --XXXX   Compare word to register X
+33EF 26 F8	BNE r      ------   Branch if not equal,    <>
+33F1 86	03	LDAA #     --XX0-   Loads register with given byte
+33F3 C6	06	LDAB #     --XX0-
+33F5 3A		ABX        ------   Add B to X
+33F6 C6 66	LDAB #     --XX0-
+33F8 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+33FA 08		INX        ---X--   Increment X
+33FB 5A		DECB       --XXX-
+33FC 26 FA	BNE r      ------   Branch if not equal,    <>
+33FE 4A		DECA       --XXX-
+33FF 26 F2	BNE r      ------   Branch if not equal,    <>
+3401 CE 11 8C	LDX ##     --XX0-   Loads X register with given word
+3404 86 08	LDAA #     --XX0-   Loads register with given byte
+3406 C6 0B	LDAB #     --XX0-
+3408 3A		ABX        ------   Add B to X
+3409 C6 F1	LDAB #     --XX0-
+340B 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+340D 08		INX        ---X--   Increment X
+340E 5A		DECB       --XXX-
+340F 26 FA	BNE r      ------   Branch if not equal,    <>
+3411 4A		DECA       --XXX-
+3412 26 F2	BNE r      ------   Branch if not equal,    <>
+3414 CE 19 6C	LDX ##     --XX0-   Loads X register with given word
+3417 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+3419 08		INX        ---X--   Increment X
+341A 8C 1C 80	CPX ##     --XXXX   Compare word to register X
+341D 26 F8	BNE r      ------   Branch if not equal,    <>
+341F C6 FF	LDAB #     --XX0-
+3421 3A		ABX        ------   Add B to X
+3422 6F 00	CLR d,X    --0100   Clear register or byte in memory, making it 0.
+3424 08		INX        ---X--   Increment X
+3425 8C 1F F0	CPX ##     --XXXX   Compare word to register X
+3428 26 F8	BNE r      ------   Branch if not equal,    <>
+342A 86 FF	LDAA #     --XX0-   Loads register with given byte
+342C B7 19 AA	STAA mm    --XX0-   Stores byte register at given address
+342F CE 1A 28	LDX ##     --XX0-   Loads X register with given word
+3432 C6 06	LDAB #     --XX0-
+3434 86 08	LDAA #     --XX0-   Loads register with given byte
+3436 A7 00	STAA d,X   --XX0-   Stores byte register at given address
+3438 8B 10	ADDA #     X-XXXX   Add given byte value to register.
+343A 3A		ABX        ------   Add B to X
+343B 8C 1A 58	CPX ##     --XXXX   Compare word to register X
+343E 26 F6	BNE r      ------   Branch if not equal,    <>
+3440 86 0C	LDAA #     --XX0-   Loads register with given byte
+3442 A7 00	STAA d,X   --XX0-   Stores byte register at given address
+3444 8B 10	ADDA #     X-XXXX   Add given byte value to register.
+3446 3A		ABX        ------   Add B to X
+3447 8C 1A 88	CPX ##     --XXXX   Compare word to register X
+344A 26 F6	BNE r      ------   Branch if not equal,    <>
+344C 39		RTS        ------   Return from subroutine
+
+@344D subrotine
 344D CE
 344E 1C
 344F 80
@@ -1043,6 +985,8 @@ ORG $3000
 345A 26
 345B F7
 345C 39
+
+@345D subroutine
 345D BD
 345E F9
 345F E3
@@ -1060,7 +1004,7 @@ ORG $3000
 346B 39
 
 @346C subroutine
-346C 4F
+346C 4F		CLRA       --0100
 346D CE
 346E 23
 346F 01
