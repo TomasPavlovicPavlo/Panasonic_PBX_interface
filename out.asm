@@ -1,40 +1,58 @@
 ; f9dasm: M6800/1/2/3/8/9 / H6309 Binary/OS9/FLEX9 Disassembler V1.83
 ; Loaded binary file KX-T30810B_FW.BIN
 
-P1DDR equ $0000
-P2DDR equ $0001
-PORT1 equ $0002
-PORT2 equ $0003
-P3DDR equ $0004
-P4DDR equ $0005
-PORT3 equ $0006
-PORT4 equ $0007
-TCSR1 equ $0008
-FRCH  equ $0009
-FRCL  equ $000A
-OCR1H equ $000B
-OCR1L equ $000C
-ICRH  equ $000D
-ICRL  equ $000E
-TCSR2 equ $000F
-RMCR  equ $0010
-TRCSR1 equ $0011
-RDR   equ $0012
-TDR   equ $0013
-RP5CR equ $0014
-PORT5 equ $0015
-P6DDR equ $0016
-PORT6 equ $0017
-PORT7 equ $0018
-OCR2H equ $0019
-OCR2L equ $001A
-TCSR3 equ $001B
-TCONR equ $001C
-T2CNT equ $001D
-TRCSR2 equ $001E
-TSTREG equ $001F
-P5DDR equ $0020
-P6CSR equ $0021
+
+; $0000 - $001F         Internal Registers
+; $0020 - $003F         External RAM
+; $0040 - $00FF         Internal RAM
+; $0100 - $1FFF         External RAM
+; $2000 - $200F         Gate Array IC136        R/W
+; $2010 - $20FF         -
+; $2100 - $210F         Clock IC109             R/W
+; $2110 - $21FF         -
+; $2200                 DTMF receivers IC114, IC115    R
+; $2201 - $22FF         -
+; $2300 - $230F         Gate Array IC113        R/W
+; $2310 - $2FFF         -
+; $3000 - $FFFF         Code        R
+
+
+;****************************************************
+;* Internal Registers                                      *
+;****************************************************
+
+; -   equ $0000
+P2DDR equ $0001         ; Port 2 Data Direction Register        W       $FC
+; ext equ $0002
+PORT2 equ $0003         ; Port 2                                R/W     -
+; ext equ $0004
+; -   equ $0005
+; ext equ $0006
+; ext equ $0007
+TCSR1 equ $0008         ; Timer Control/Status Register 1       R/W     $00
+FRCH  equ $0009         ; Free Running Counter High             R/W     $00
+FRCL  equ $000A         ; Free Running Counter Low              R/W     $00
+OCR1H equ $000B         ; Output Compare Register 1 High        R/W     $FF
+OCR1L equ $000C         ; Output Compare Register 1 Low         R/W     $FF
+ICRH  equ $000D         ; Input Capture Register High           R       $00
+ICRL  equ $000E         ; Input Capture Register Low            R       $00
+TCSR2 equ $000F         ; Timer Control/Status Register 2       R/W     $10
+RMCR  equ $0010         ; Rate, Mode Control Register           R/W     $00
+TRCSR1 equ $0011        ; Tx/Rx Control Status Register         R/W     $20
+RDR   equ $0012         ; Receive Data Register                 R       $00
+TDR   equ $0013         ; Transmit Data Register                W       $00
+RP5CR equ $0014         ; RAM/Port5 Control register            R/W     $7C or $Fc
+PORT5 equ $0015         ; Port 5                                R       -
+P6DDR equ $0016         ; Port 6 Data Direction Register        W       $00
+PORT6 equ $0017         ; Port 6                                R/W     -
+; ext equ $0018         
+OCR2H equ $0019         ; Output Compare Register 2 High        R/W     $FF
+OCR2L equ $001A         ; Output Compare Register 2 Low         R/W     $FF
+TCSR3 equ $001B         ; Timer Control/Status Register 3       R/W     $20
+TCONR equ $001C         ; Time Constant Register                R/W     $FF
+T2CNT equ $001D         ; Timer 2 Up Counter                    R/W     $00
+; -   equ $001E
+TSTREG equ $001F        ; Test Register                         -       -
 
 
 
@@ -7958,7 +7976,7 @@ Z7189   STX     MFFFF                    ;7189: FF FF FF       '...'
         FCB     $00                      ;71C1: 00             '.'
         FCB     $00                      ;71C2: 00             '.'
         FCB     $00                      ;71C3: 00             '.'
-        ORAA    P5DDR                    ;71C4: 9A 20          '. '
+        ORAA    $0020                    ;71C4: 9A 20          '. '
         BRN     Z71C8                    ;71C6: 21 00          '!.'
 Z71C8   FCB     $00                      ;71C8: 00             '.'
         FCB     $00                      ;71C9: 00             '.'
