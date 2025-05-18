@@ -72,7 +72,7 @@ hdlr_RST LDS     #$1FFF                   ;3000: 8E 1F FF       '...'
         ANDA    #$30      ; A & P5.4, P5.5               ;3005: 84 30          '.0'
         LDAB    PORT6     ; B=PORT 6               ;3007: D6 17          '..'
         ANDB    #$80      ; B & P6.7               ;3009: C4 80          '..'
-        STD     $0040     ; $40=AB               ;300B: DD 40          '.@'
+        STD     $40       ; *0x40=AB               ;300B: DD 40          '.@'
         TSTA              ;                ;300D: 4D             'M'
         BEQ     Z3013     ; if 0 goto 3013              ;300E: 27 03          ''.'
         JMP     ZD685                    ;3010: 7E D6 85       '~..'
@@ -463,6 +463,8 @@ Z3353   PULX                             ;3353: 38             '8'
 Z3354   CLR     $2E,X                    ;3354: 6F 2E          'o.'
         CLR     $EC,X                    ;3356: 6F EC          'o.'
         RTS                              ;3358: 39             '9'
+
+
 Z3359   CLRA                             ;3359: 4F             'O'
         CLRB                             ;335A: 5F             '_'
         STD     FRCH    ; FRC=0                    ;335B: DD 09          '..'
@@ -472,6 +474,8 @@ Z3359   CLRA                             ;3359: 4F             'O'
         CLR     TCSR1   ; TCSR1=0                ;3361: 7F 00 08       '...'
         CLR     TCSR2   ; TCSR2=0                ;3364: 7F 00 0F       '...'
         RTS                              ;3367: 39             '9'
+
+
 Z3368   LDAA    #$C8                     ;3368: 86 C8          '..'
         STAA    RP5CR                    ;336A: 97 14          '..'
         CLRA                             ;336C: 4F             'O'
@@ -481,27 +485,43 @@ Z3368   LDAA    #$C8                     ;3368: 86 C8          '..'
         LDAA    #$7F                     ;3373: 86 7F          '..'
         STAA    P6DDR                    ;3375: 97 16          '..'
         RTS                              ;3377: 39             '9'
-Z3378   CLRA                             ;3378: 4F             'O'
-        LDAB    #$80                     ;3379: C6 80          '..'
-        STD     M2300                    ;337B: FD 23 00       '.#.'
-        LDAB    #$3C                     ;337E: C6 3C          '.<'
-        STD     M2302                    ;3380: FD 23 02       '.#.'
-        LDAA    #$3C                     ;3383: 86 3C          '.<'
-        STD     M2304                    ;3385: FD 23 04       '.#.'
-        LDD     #$FF7F                   ;3388: CC FF 7F       '...'
-        STD     M2308                    ;338B: FD 23 08       '.#.'
-        TST     M0040                   ;338E: 7D 00 40       '}.@'
-        BEQ     Z3398                    ;3391: 27 05          ''.'
-        LDD     #$7738                   ;3393: CC 77 38       '.w8'
-        BRA     Z339B                    ;3396: 20 03          ' .'
-Z3398   LDD     #$7700                   ;3398: CC 77 00       '.w.'
-Z339B   STD     M230A                    ;339B: FD 23 0A       '.#.'
-        CLR     M2000                    ;339E: 7F 20 00       '. .'
-        CLR     M2006                    ;33A1: 7F 20 06       '. .'
-        RTS                              ;33A4: 39             '9'
+
+; init Gate Arrays        
+; 0x2300 = 0x00  (P0)
+; 0x2301 = 0x80  (P0)
+; 0x2302 = 0x00  (P0)
+; 0x2303 = 0x3C  (P0)
+; 0x2304 = 0x3C  (P0)
+; 0x2305 = 0x3C  (P0)
+; 0x2308 = 0xFF  (P1DD, P0DD)
+; 0x2309 = 0x7F  (P3DD, P2DD)
+; 0x230A = 0x77  (P5DD, P4DD)
+; 0x230B = 0x38/0x00  (P7DD, P6DD)
+Z3378   CLRA            ; A=0                                   ;3378: 4F             
+        LDAB    #$80    ; B=0x80                                ;3379: C6 80          
+        STD     $2300   ; *0x2300=0x00, *0x2301=0x80            ;337B: FD 23 00       
+        LDAB    #$3C    ; B=0x3C                                ;337E: C6 3C          
+        STD     $2302   ; *0x2302=0x00, *0x2303=0x3C            ;3380: FD 23 02       
+        LDAA    #$3C    ; A=0x3C                                ;3383: 86 3C          
+        STD     $2304   ; *0x2304=0x3C, *0x2305=0x3C            ;3385: FD 23 04       
+        LDD     #$FF7F  ; D=0xFF7F                              ;3388: CC FF 7F       
+        STD     $2308   ; *0x2308=0xFF, *0x2309=7F              ;338B: FD 23 08       
+        TST     $0040   ; *0x40 Z=?, N=?                        ;338E: 7D 00 40       
+        BEQ     Z3398   ; if Z=0 goto Z3398                     ;3391: 27 05          
+        LDD     #$7738  ; D=0x7738                              ;3393: CC 77 38       
+        BRA     Z339B   ; goto Z339B                            ;3396: 20 03          
+Z3398   LDD     #$7700  ; D=0x7700                              ;3398: CC 77 00       
+Z339B   STD     $230A   ; *0x230A=0x77, *0x2309=38/00           ;339B: FD 23 0A       
+        CLR     $2000   ; *0x2000=0                             ;339E: 7F 20 00       
+        CLR     $2006   ; *0x2006=0                             ;33A1: 7F 20 06       
+        RTS             ; return                                ;33A4: 39             
+
+
+
 Z33A5   BSR     Z33AA                    ;33A5: 8D 03          '..'
         BSR     Z33D2                    ;33A7: 8D 29          '.)'
         RTS                              ;33A9: 39             '9'
+
 Z33AA   LDX     #$0042                   ;33AA: CE 00 42       '..B'
 Z33AD   CLR     ,X                       ;33AD: 6F 00          'o.'
         INX                              ;33AF: 08             '.'
@@ -521,6 +541,7 @@ Z33C9   STAA    ,X                       ;33C9: A7 00          '..'
         CPX     #M00A4                   ;33CC: 8C 00 A4       '...'
         BNE     Z33C9                    ;33CF: 26 F8          '&.'
         RTS                              ;33D1: 39             '9'
+
 Z33D2   LDX     #M0100                   ;33D2: CE 01 00       '...'
 Z33D5   CLR     ,X                       ;33D5: 6F 00          'o.'
         INX                              ;33D7: 08             '.'
@@ -602,6 +623,8 @@ Z3465   STAA    ,X                       ;3465: A7 00          '..'
         DECA                             ;3468: 4A             'J'
         BNE     Z3465                    ;3469: 26 FA          '&.'
         RTS                              ;346B: 39             '9'
+
+
 Z346C   CLRA                             ;346C: 4F             'O'
         LDX     #M2301                   ;346D: CE 23 01       '.#.'
         CLRB                             ;3470: 5F             '_'
@@ -17540,56 +17563,64 @@ ZBF03   CLRA                             ;BF03: 4F             'O'
         AIM     #$FE,-$04,X              ;BF09: 61 FE 1C       'a..'
         AIM     #$BF,-$04,X              ;BF0C: 61 BF 1C       'a..'
         RTS                              ;BF0F: 39             '9'
-ZBF10   LDX     #M2000                   ;BF10: CE 20 00       '. .'
-        LDD     $01,X                    ;BF13: EC 01          '..'
-        STD     M00AD                    ;BF15: DD AD          '..'
-        LDD     $03,X                    ;BF17: EC 03          '..'
-        STD     M00AF                    ;BF19: DD AF          '..'
-        LDD     $05,X                    ;BF1B: EC 05          '..'
-        STD     M00B1                    ;BF1D: DD B1          '..'
-        LDAB    ,X                       ;BF1F: E6 00          '..'
-        PSHB                             ;BF21: 37             '7'
-        ANDB    #$07                     ;BF22: C4 07          '..'
-        LDAA    #$07                     ;BF24: 86 07          '..'
-        SBA                              ;BF26: 10             '.'
-        PULB                             ;BF27: 33             '3'
-        ANDB    #$F8                     ;BF28: C4 F8          '..'
-        ABA                              ;BF2A: 1B             '.'
-        STAA    M00AC                    ;BF2B: 97 AC          '..'
-        LDD     M00A6                    ;BF2D: DC A6          '..'
-        STD     $01,X                    ;BF2F: ED 01          '..'
-        LDD     M00A8                    ;BF31: DC A8          '..'
-        STD     $03,X                    ;BF33: ED 03          '..'
-        LDAA    M00AA                    ;BF35: 96 AA          '..'
-        STAA    $05,X                    ;BF37: A7 05          '..'
-        LDAB    M00A5                    ;BF39: D6 A5          '..'
-        PSHB                             ;BF3B: 37             '7'
-        ANDB    #$70                     ;BF3C: C4 70          '.p'
-        LDAA    #$70                     ;BF3E: 86 70          '.p'
-        SBA                              ;BF40: 10             '.'
-        PULB                             ;BF41: 33             '3'
-        ANDB    #$8F                     ;BF42: C4 8F          '..'
-        ABA                              ;BF44: 1B             '.'
-        ORAA    #$80                     ;BF45: 8A 80          '..'
-        STAA    ,X                       ;BF47: A7 00          '..'
-        TIM     #$F8,M00AC               ;BF49: 7B F8 AC       '{..'
-        BEQ     ZBF59                    ;BF4C: 27 0B          ''.'
-        TIM     #$10,M00AC               ;BF4E: 7B 10 AC       '{..'
-        BEQ     ZBF59                    ;BF51: 27 06          ''.'
-        LDAA    M00AE                    ;BF53: 96 AE          '..'
-        ANDA    #$FE                     ;BF55: 84 FE          '..'
-        STAA    M00AE                    ;BF57: 97 AE          '..'
-ZBF59   RTS                              ;BF59: 39             '9'
-ZBF5A   LDAA    M0F9A                    ;BF5A: B6 0F 9A       '...'
-        ANDA    #$0F                     ;BF5D: 84 0F          '..'
-        CMPA    M004F                    ;BF5F: 91 4F          '.O'
-        BNE     ZBF70                    ;BF61: 26 0D          '&.'
-        LDAA    #$08                     ;BF63: 86 08          '..'
-        LDAB    M004F                    ;BF65: D6 4F          '.O'
-        JSR     ZA012                    ;BF67: BD A0 12       '...'
-        CLR     M0F9A                    ;BF6A: 7F 0F 9A       '...'
-        CLR     M2300                    ;BF6D: 7F 23 00       '.#.'
-ZBF70   RTS                              ;BF70: 39             '9'
+
+
+; obsluha IC136
+ZBF10   LDX     #$2000  ; X=0x2000                              ;BF10: CE 20 00
+        LDD     $01,X   ; D=*0x2001, *0x2002                    ;BF13: EC 01
+        STD     $AD     ; *0xAD=*0x2001, *0xAE=*0x2002          ;BF15: DD AD
+        LDD     $03,X   ; D=*0x2003, *0x2004                    ;BF17: EC 03
+        STD     $AF     ; *0xAF=*0x2003, *0xB0=*0x2004          ;BF19: DD AF
+        LDD     $05,X   ; D=*0x2005, *0x2006                    ;BF1B: EC 05
+        STD     $B1     ; *0xB1=*0x2005, *0xB2=*0x2006          ;BF1D: DD B1
+        LDAB    0,X     ; B=*0x2000                             ;BF1F: E6 00
+        PSHB            ; PUSH B                                ;BF21: 37   
+        ANDB    #$07    ; B = B & 0x07                          ;BF22: C4 07
+        LDAA    #$07    ; A=0x07                                ;BF24: 86 07
+        SBA             ; A=A-B                                 ;BF26: 10   
+        PULB            ; PULL B                                ;BF27: 33   
+        ANDB    #$F8    ; B = B & 0xF8                          ;BF28: C4 F8
+        ABA             ; A=A+B                                 ;BF2A: 1B   
+        STAA    $AC     ; *0xAC=A                               ;BF2B: 97 AC
+        LDD     $A6     ; D=*0xA6                               ;BF2D: DC A6
+        STD     $01,X   ; *0x2001=*0xA6, *0x2002=*0xA7          ;BF2F: ED 01
+        LDD     $A8     ; D=*0xA8                               ;BF31: DC A8
+        STD     $03,X   ; *0x2003=*0xA8, *0x2004=*0xA9          ;BF33: ED 03
+        LDAA    $AA     ; A=*0xAA                               ;BF35: 96 AA
+        STAA    $05,X   ; *0x2005=*0xAA                         ;BF37: A7 05
+        LDAB    $A5     ; B=*0xA5                               ;BF39: D6 A5
+        PSHB            ; PUSH B                                ;BF3B: 37   
+        ANDB    #$70    ; B = B & 0x70                          ;BF3C: C4 70
+        LDAA    #$70    ; A=0x70                                ;BF3E: 86 70
+        SBA             ; A=A-B                                 ;BF40: 10   
+        PULB            ; PULL B                                ;BF41: 33   
+        ANDB    #$8F    ; B = B & 0x8F                          ;BF42: C4 8F
+        ABA             ; A=A+B                                 ;BF44: 1B   
+        ORAA    #$80    ; A = A | 0x80                          ;BF45: 8A 80
+        STAA    0,X     ; *0x2000=A                             ;BF47: A7 00
+        TIM     #$F8,$AC        ; ? = *0xAC & 0xF8              ;BF49: 7B F8 AC
+        BEQ     ZBF59           ; if Z=1 goto ZBF59             ;BF4C: 27 0B   
+        TIM     #$10,$AC        ; ? = *0xAC & 0x10              ;BF4E: 7B 10 AC
+        BEQ     ZBF59           ; if Z=1 goto ZBF59             ;BF51: 27 06   
+        LDAA    $AE     ; A=*0xAE                               ;BF53: 96 AE   
+        ANDA    #$FE    ; A = A & 0xFE                          ;BF55: 84 FE   
+        STAA    $AE     ; *0xAE=A                               ;BF57: 97 AE   
+ZBF59   RTS             ; return                                ;BF59: 39 
+
+
+
+ZBF5A   LDAA    $0F9A   ; A=*0x0F9A                             ;BF5A: B6 0F 9A       
+        ANDA    #$0F    ; A = A & 0x0F                          ;BF5D: 84 0F          
+        CMPA    $4F     ; ? = A - *0x4F                          ;BF5F: 91 4F          
+        BNE     ZBF70   ; if Z!= 0 goto ZBF70                   ;BF61: 26 0D          
+        LDAA    #$08    ; A=0x80                                ;BF63: 86 08          
+        LDAB    $4F     ; B=*0x4F                               ;BF65: D6 4F          
+        JSR     ZA012   ; goto ZA012                            ;BF67: BD A0 12       
+        CLR     $0F9A   ; *0x0F9A=0                             ;BF6A: 7F 0F 9A       
+        CLR     $2300   ; *0x2300                               ;BF6D: 7F 23 00       
+ZBF70   RTS             ; return                                ;BF70: 39             
+
+
 ZBF71   PSHX                             ;BF71: 3C             '<'
         JSR     ZC03D                    ;BF72: BD C0 3D       '..='
         STX     M004C                    ;BF75: DF 4C          '.L'
