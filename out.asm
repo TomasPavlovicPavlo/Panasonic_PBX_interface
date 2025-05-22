@@ -73,9 +73,9 @@ hdlr_RST LDS     #$1FFF                   ;3000: 8E 1F FF       '...'
         LDAB    PORT6     ; B=PORT 6               ;3007: D6 17          '..'
         ANDB    #$80      ; B & P6.7               ;3009: C4 80          '..'
         STD     $40       ; *0x40=AB               ;300B: DD 40          '.@'
-        TSTA              ;                ;300D: 4D             'M'
-        BEQ     Z3013     ; if 0 goto 3013              ;300E: 27 03          ''.'
-        JMP     ZD685                    ;3010: 7E D6 85       '~..'
+        TSTA              ; ? A               ;300D: 4D             'M'
+        BEQ     Z3013     ; if 0 goto Z3013              ;300E: 27 03          ''.'
+        JMP     ZD685     ; else goto ZD685               ;3010: 7E D6 85       '~..'
 Z3013   SEI                              ;3013: 0F             '.'
         LDS     #$1FFF                   ;3014: 8E 1F FF       '...'
         JSR     Z3359                    ;3017: BD 33 59       '.3Y'
@@ -507,8 +507,8 @@ Z3378   CLRA            ; A=0                                   ;3378: 4F
         LDD     #$FF7F  ; D=0xFF7F                              ;3388: CC FF 7F       
         STD     $2308   ; *0x2308=0xFF, *0x2309=7F              ;338B: FD 23 08       
         TST     $0040   ; *0x40 Z=?, N=?                        ;338E: 7D 00 40       
-        BEQ     Z3398   ; if Z=0 goto Z3398                     ;3391: 27 05          
-        LDD     #$7738  ; D=0x7738                              ;3393: CC 77 38       
+        BEQ     Z3398   ; if Z=1 goto Z3398 (*0x40=0) TEST      ;3391: 27 05          
+        LDD     #$7738  ; else D=0x7738 (*0x40!=0) Prevadzka    ;3393: CC 77 38       
         BRA     Z339B   ; goto Z339B                            ;3396: 20 03          
 Z3398   LDD     #$7700  ; D=0x7700                              ;3398: CC 77 00       
 Z339B   STD     $230A   ; *0x230A=0x77, *0x2309=38/00           ;339B: FD 23 0A       
@@ -783,6 +783,8 @@ Z35B1   CLRA                             ;35B1: 4F             'O'
         LDAA    #$08                     ;35BC: 86 08          '..'
         STAA    TCSR1                    ;35BE: 97 08          '..'
         RTS                              ;35C0: 39             '9'
+
+
 hdlr_SWI2 TIM     #$40,TCSR1               ;35C1: 7B 40 08       '{@.'
         BNE     Z35C7                    ;35C4: 26 01          '&.'
         RTI                              ;35C6: 3B             ';'
@@ -936,19 +938,19 @@ Z36F8   STD     M00A8                    ;36F8: DD A8          '..'
         JSR     ZBF71                    ;36FA: BD BF 71       '..q'
 M36FD   LDAA    $05,X                    ;36FD: A6 05          '..'
         STAA    M00AA                    ;36FF: 97 AA          '..'
-Z3701   LDD     ,X      ;                  ;3701: EC 00          '..'
-        STD     $A5     ; *0xA5 = A, *0xA6 = B,                     ;3703: DD A5          '..'
-        LDAA    $02,X                    ;3705: A6 02          '..'
-        STAA    M00A7                    ;3707: 97 A7          '..'
-        LDX     #M00A5                   ;3709: CE 00 A5       '...'
-        JSR     ZBF10                    ;370C: BD BF 10       '...'
-        LDAA    M00AC                    ;370F: 96 AC          '..'
-        BITA    #$80                     ;3711: 85 80          '..'
-        BEQ     Z3718                    ;3713: 27 03          ''.'
-        JMP     Z37E3                    ;3715: 7E 37 E3       '~7.'
-Z3718   BITA    #$10                     ;3718: 85 10          '..'
-        BEQ     Z371F                    ;371A: 27 03          ''.'
-        AIM     #$FE,M00AE               ;371C: 71 FE AE       'q..'
+Z3701   LDD     ,X      ; D = *X                        ;3701: EC 00          
+        STD     $A5     ; *0xA5 = A, *0xA6 = B,         ;3703: DD A5          
+        LDAA    $02,X   ; A=*X+2                        ;3705: A6 02          
+        STAA    $A7     ; *0xA7=A                       ;3707: 97 A7          
+        LDX     $00A5   ; X = 0x00A5                    ;3709: CE 00 A5       
+        JSR     ZBF10   ; goto obsluha IC136            ;370C: BD BF 10       
+        LDAA    M00AC   ; A=*0xAC                       ;370F: 96 AC          
+        BITA    #$80    ; ? = A & 0x80                  ;3711: 85 80          
+        BEQ     Z3718   ; if Z=1 goto Z3718             ;3713: 27 03          
+        JMP     Z37E3   ; else goto Z37E3               ;3715: 7E 37 E3       
+Z3718   BITA    #$10    ; ? = A & 0x10                  ;3718: 85 10          
+        BEQ     Z371F   ; if Z=1 goto Z371F             ;371A: 27 03          
+        AIM     #$FE,$AE        ; *0xAE = A+0xFE        ;371C: 71 FE AE       
 Z371F   ANDA    #$07                     ;371F: 84 07          '..'
         JSR     ZAF23                    ;3721: BD AF 23       '..#'
         JSR     ZC0DA                    ;3724: BD C0 DA       '...'
@@ -1042,6 +1044,9 @@ Z37DD   ORAA    #$04                     ;37DD: 8A 04          '..'
 Z37DF   EORA    #$10                     ;37DF: 88 10          '..'
         STAA    $02,X                    ;37E1: A7 02          '..'
 Z37E3   RTS                              ;37E3: 39             '9'
+
+
+
 Z37E4   LDAA    #$01                     ;37E4: 86 01          '..'
         STAA    M004E                    ;37E6: 97 4E          '.N'
         LDX     #M1048                   ;37E8: CE 10 48       '..H'
@@ -15462,6 +15467,8 @@ ZAF0C   PSHA                             ;AF0C: 36             '6'
         PULB                             ;AF1E: 33             '3'
         PULA                             ;AF1F: 32             '2'
         RTS                              ;AF20: 39             '9'
+
+
 ZAF21   LDAA    $21,X                    ;AF21: A6 21          '.!'
 ZAF23   PSHA                             ;AF23: 36             '6'
         PSHB                             ;AF24: 37             '7'
@@ -15487,6 +15494,8 @@ ZAF49   XGDX                             ;AF49: 18             '.'
         PULB                             ;AF4A: 33             '3'
         PULA                             ;AF4B: 32             '2'
         RTS                              ;AF4C: 39             '9'
+
+
 ZAF4D   PSHA                             ;AF4D: 36             '6'
         TIM     #$4C,$00,X               ;AF4E: 6B 4C 00       'kL.'
         BNE     ZAF67                    ;AF51: 26 14          '&.'
