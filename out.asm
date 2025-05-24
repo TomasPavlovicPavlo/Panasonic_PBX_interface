@@ -6,6 +6,7 @@
 ; $0020 - $003F         External RAM
 ; $0040 - $00FF         Internal RAM
 ; $0100 - $1FFF         External RAM
+; $1FFF                 Top Of Stack
 ; $2000 - $200F         Gate Array IC136        R/W
 ; $2010 - $20FF         -
 ; $2100 - $210F         Clock IC109             R/W
@@ -15,6 +16,25 @@
 ; $2300 - $230F         Gate Array IC113        R/W
 ; $2310 - $2FFF         -
 ; $3000 - $FFFF         Code        R
+
+; $40  TEST piny
+
+; $A5 -> $2000
+; $A6 -> $2001
+; $A7 -> $2002
+; $A8 -> $2003
+; $A9 -> $2004
+; $AA -> $2005
+; $AB -> $2006  RGx BELL relay
+
+; $AC <- $2000
+; $AD <- $2001
+; $AE <- $2002
+; $AF <- $2003
+; $B0 <- $2004
+; $B1 <- $2005  HKx Hook Detector
+; $B2 <- $2006
+
 
 
 ;****************************************************
@@ -67,20 +87,23 @@ TSTREG equ $001F        ; Test Register                         -       -
 
         ORG     $3000
 
-hdlr_RST LDS     #$1FFF                   ;3000: 8E 1F FF       '...'
-        LDAA    PORT5     ; A=PORT 5               ;3003: 96 15          '..'
-        ANDA    #$30      ; A & P5.4, P5.5               ;3005: 84 30          '.0'
-        LDAB    PORT6     ; B=PORT 6               ;3007: D6 17          '..'
-        ANDB    #$80      ; B & P6.7               ;3009: C4 80          '..'
-        STD     $40       ; *0x40=AB               ;300B: DD 40          '.@'
-        TSTA              ; ? A               ;300D: 4D             'M'
-        BEQ     Z3013     ; if 0 goto Z3013              ;300E: 27 03          ''.'
-        JMP     ZD685     ; else goto ZD685               ;3010: 7E D6 85       '~..'
-Z3013   SEI                              ;3013: 0F             '.'
+MAIN
+        LDS     #$1FFF          ; Stack = 0x1FFF                ;3000: 8E 1F FF       
+        LDAA    PORT5           ; A=PORT 5                      ;3003: 96 15          
+        ANDA    #$30            ; A & P5.4, P5.5                ;3005: 84 30          
+        LDAB    PORT6           ; B=PORT 6                      ;3007: D6 17          
+        ANDB    #$80            ; B & P6.7                      ;3009: C4 80          
+        STD     $40             ; *0x40=AB                      ;300B: DD 40          
+        TSTA                    ; ? A                           ;300D: 4D             
+        BEQ     MAIN_TEST       ; if A==0 goto MAIN_TEST        ;300E: 27 03          
+        JMP     MAIN_FUNCTION   ; else goto MAIN_FUNCTION       ;3010: 7E D6 85       
+
+MAIN_TEST
+        SEI                              ;3013: 0F             '.'
         LDS     #$1FFF                   ;3014: 8E 1F FF       '...'
-        JSR     Z3359                    ;3017: BD 33 59       '.3Y'
-        JSR     Z3368                    ;301A: BD 33 68       '.3h'
-        JSR     Z3378                    ;301D: BD 33 78       '.3x'
+        JSR     INIT_TIMERS                    ;3017: BD 33 59       '.3Y'
+        JSR     INIT_PORTS                    ;301A: BD 33 68       '.3h'
+        JSR     INIT_GA                    ;301D: BD 33 78       '.3x'
         JSR     Z33A5                    ;3020: BD 33 A5       '.3.'
         JSR     Z346C                    ;3023: BD 34 6C       '.4l'
         LDX     #$FFFF                   ;3026: CE FF FF       '...'
@@ -231,13 +254,7 @@ Z314C   JSR     Z31D0                    ;314C: BD 31 D0       '.1.'
         CLR     $17,X                    ;3158: 6F 17          'o.'
         AIM     #$FE,-$0B,X              ;315A: 61 FE 15       'a..'
         TIM     #$40,-$0A,X              ;315D: 6B 40 16       'k@.'
-        BNE     Z3164                    ;3160: 26 02          '&.'
-        BRA     Z31C4                    ;3162: 20 60          ' `'
-Z3164   JSR     ZB0DE                    ;3164: BD B0 DE       '...'
-        JMP     ZB8E0                    ;3167: 7E B8 E0       '~..'
-Z316A   JSR     Z325C                    ;316A: BD 32 5C       '.2\'
-        JSR     ZA205                    ;316D: BD A2 05       '...'
-        JSR     Z32EA                    ;3170: BD 32 EA       '.2.'
+        BNE     Z3164                    ;3160: 26 02          '&.'Free Running Counter
         JSR     Z3320                    ;3173: BD 33 20       '.3 '
         OIM     #$01,-$0B,X              ;3176: 62 01 15       'b..'
         LDAA    $0B,X                    ;3179: A6 0B          '..'
@@ -465,56 +482,63 @@ Z3354   CLR     $2E,X                    ;3354: 6F 2E          'o.'
         RTS                              ;3358: 39             '9'
 
 
-Z3359   CLRA                             ;3359: 4F             'O'
-        CLRB                             ;335A: 5F             '_'
-        STD     FRCH    ; FRC=0                    ;335B: DD 09          '..'
-        COMA                             ;335D: 43             'C'
-        COMB                             ;335E: 53             'S'
-        STD     OCR1H   ; OCR1=$FFFF                 ;335F: DD 0B          '..'
-        CLR     TCSR1   ; TCSR1=0                ;3361: 7F 00 08       '...'
-        CLR     TCSR2   ; TCSR2=0                ;3364: 7F 00 0F       '...'
-        RTS                              ;3367: 39             '9'
+
+INIT_TIMERS
+        CLRA            ; A = 0                         ;3359: 4F             
+        CLRB            ; B = 0                         ;335A: 5F             
+        STD     FRCH    ; Free Running Counter=0        ;335B: DD 09          
+        COMA            ; A = 0xFF                      ;335D: 43             
+        COMB            ; B = 0xFF                      ;335E: 53             
+        STD     OCR1H   ; OCR1=$FFFF                    ;335F: DD 0B          
+        CLR     TCSR1   ; TCSR1=0                       ;3361: 7F 00 08       
+        CLR     TCSR2   ; TCSR2=0                       ;3364: 7F 00 0F       
+        RTS             ; retusrmn                      ;3367: 39             
 
 
-Z3368   LDAA    #$C8                     ;3368: 86 C8          '..'
-        STAA    RP5CR                    ;336A: 97 14          '..'
-        CLRA                             ;336C: 4F             'O'
-        STAA    P2DDR                    ;336D: 97 01          '..'
-        LDAA    #$40                     ;336F: 86 40          '.@'
-        STAA    PORT6                    ;3371: 97 17          '..'
-        LDAA    #$7F                     ;3373: 86 7F          '..'
-        STAA    P6DDR                    ;3375: 97 16          '..'
-        RTS                              ;3377: 39             '9'
+
+INIT_PORTS
+        LDAA    #$C8    ; A = 0xC8                      ;3368: 86 C8          
+        STAA    RP5CR   ; HALT, INT RAM, STBY PWR       ;336A: 97 14          
+        CLRA            ; A = 0                         ;336C: 4F             
+        STAA    P2DDR   ; P2 - INPUTS                   ;336D: 97 01          
+        LDAA    #$40    ; A = 0x40                      ;336F: 86 40          
+        STAA    PORT6   ; P6 = 0x40                     ;3371: 97 17          
+        LDAA    #$7F    ; A = 0x7F                      ;3373: 86 7F          
+        STAA    P6DDR   ; P7- IN, P6-0 - OUT            ;3375: 97 16          
+        RTS             ; return                        ;3377: 39             
 
 ; init Gate Arrays        
 ; 0x2300 = 0x00  (P0)
-; 0x2301 = 0x80  (P0)
-; 0x2302 = 0x00  (P0)
-; 0x2303 = 0x3C  (P0)
-; 0x2304 = 0x3C  (P0)
-; 0x2305 = 0x3C  (P0)
+; 0x2301 = 0x80  (P1)
+; 0x2302 = 0x00  (P2)
+; 0x2303 = 0x3C  (P3)
+; 0x2304 = 0x3C  (P4)
+; 0x2305 = 0x3C  (P5)
 ; 0x2308 = 0xFF  (P1DD, P0DD)
 ; 0x2309 = 0x7F  (P3DD, P2DD)
 ; 0x230A = 0x77  (P5DD, P4DD)
 ; 0x230B = 0x38/0x00  (P7DD, P6DD)
-Z3378   CLRA            ; A=0                                   ;3378: 4F             
-        LDAB    #$80    ; B=0x80                                ;3379: C6 80          
-        STD     $2300   ; *0x2300=0x00, *0x2301=0x80            ;337B: FD 23 00       
-        LDAB    #$3C    ; B=0x3C                                ;337E: C6 3C          
-        STD     $2302   ; *0x2302=0x00, *0x2303=0x3C            ;3380: FD 23 02       
-        LDAA    #$3C    ; A=0x3C                                ;3383: 86 3C          
-        STD     $2304   ; *0x2304=0x3C, *0x2305=0x3C            ;3385: FD 23 04       
-        LDD     #$FF7F  ; D=0xFF7F                              ;3388: CC FF 7F       
-        STD     $2308   ; *0x2308=0xFF, *0x2309=7F              ;338B: FD 23 08       
-        TST     $0040   ; *0x40 Z=?, N=?                        ;338E: 7D 00 40       
-        BEQ     Z3398   ; if Z=1 goto Z3398 (*0x40=0) TEST      ;3391: 27 05          
-        LDD     #$7738  ; else D=0x7738 (*0x40!=0) Prevadzka    ;3393: CC 77 38       
-        BRA     Z339B   ; goto Z339B                            ;3396: 20 03          
-Z3398   LDD     #$7700  ; D=0x7700                              ;3398: CC 77 00       
-Z339B   STD     $230A   ; *0x230A=0x77, *0x2309=38/00           ;339B: FD 23 0A       
-        CLR     $2000   ; *0x2000=0                             ;339E: 7F 20 00       
-        CLR     $2006   ; *0x2006=0                             ;33A1: 7F 20 06       
-        RTS             ; return                                ;33A4: 39             
+INIT_GA
+        CLRA                    ; A=0                                   ;3378: 4F             
+        LDAB    #$80            ; B=0x80                                ;3379: C6 80          
+        STD     $2300           ; *0x2300=0x00, *0x2301=0x80            ;337B: FD 23 00       
+        LDAB    #$3C            ; B=0x3C                                ;337E: C6 3C          
+        STD     $2302           ; *0x2302=0x00, *0x2303=0x3C            ;3380: FD 23 02       
+        LDAA    #$3C            ; A=0x3C                                ;3383: 86 3C          
+        STD     $2304           ; *0x2304=0x3C, *0x2305=0x3C            ;3385: FD 23 04       
+        LDD     #$FF7F          ; D=0xFF7F                              ;3388: CC FF 7F       
+        STD     $2308           ; *0x2308=0xFF, *0x2309=7F              ;338B: FD 23 08       
+        TST     $0040           ; *0x40 Z=?, N=?                        ;338E: 7D 00 40       
+        BEQ     INIT_GA_5       ; if Z=1 goto INIT_GA_5 (*0x40=0) TEST  ;3391: 27 05          
+        LDD     #$7738          ; else D=0x7738 (*0x40!=0) Prevadzka    ;3393: CC 77 38       
+        BRA     INIT_GA_10      ; goto INIT_GA_10                       ;3396: 20 03          
+INIT_GA_5
+        LDD     #$7700          ; D=0x7700                              ;3398: CC 77 00       
+INIT_GA_10
+        STD     $230A           ; *0x230A=0x77, *0x2309=38/00           ;339B: FD 23 0A       
+        CLR     $2000           ; *0x2000=0                             ;339E: 7F 20 00       
+        CLR     $2006           ; *0x2006=0                             ;33A1: 7F 20 06       
+        RTS                     ; return                                ;33A4: 39             
 
 
 
@@ -774,6 +798,8 @@ Z359A   LDAB    #$FC                     ;359A: C6 FC          '..'
         LDAA    M005F                    ;35AB: 96 5F          '._'
         STAA    M2303                    ;35AD: B7 23 03       '.#.'
         RTS                              ;35B0: 39             '9'
+
+
 Z35B1   CLRA                             ;35B1: 4F             'O'
         CLRB                             ;35B2: 5F             '_'
         STD     FRCH                    ;35B3: DD 09          '..'
@@ -942,9 +968,9 @@ Z3701   LDD     ,X      ; D = *X                        ;3701: EC 00
         STD     $A5     ; *0xA5 = A, *0xA6 = B,         ;3703: DD A5          
         LDAA    $02,X   ; A=*X+2                        ;3705: A6 02          
         STAA    $A7     ; *0xA7=A                       ;3707: 97 A7          
-        LDX     $00A5   ; X = 0x00A5                    ;3709: CE 00 A5       
+        LDX     $00A5   ; X = *0x00A5                   ;3709: CE 00 A5       
         JSR     ZBF10   ; goto obsluha IC136            ;370C: BD BF 10       
-        LDAA    M00AC   ; A=*0xAC                       ;370F: 96 AC          
+        LDAA    $AC     ; A=*0xAC                       ;370F: 96 AC          
         BITA    #$80    ; ? = A & 0x80                  ;3711: 85 80          
         BEQ     Z3718   ; if Z=1 goto Z3718             ;3713: 27 03          
         JMP     Z37E3   ; else goto Z37E3               ;3715: 7E 37 E3       
@@ -2660,7 +2686,9 @@ Z44CA   LDAA    M005E                    ;44CA: 96 5E          '.^'
         CMPA    M005C                    ;44D4: 91 5C          '.\'
         BCS     Z44D9                    ;44D6: 25 01          '%.'
         RTS                              ;44D8: 39             '9'
-Z44D9   JMP     hdlr_RST                 ;44D9: 7E 30 00       '~0.'
+Z44D9   JMP     MAIN                 ;44D9: 7E 30 00       '~0.'
+
+
 hdlr_NMI AIM     #$EF,M005E               ;44DC: 71 EF 5E       'q.^'
         LDAA    M005E                    ;44DF: 96 5E          '.^'
         STAA    PORT6                    ;44E1: 97 17          '..'
@@ -2727,6 +2755,7 @@ Z4538   JSR     ZC06B                    ;4538: BD C0 6B       '..k'
         JSR     ZB7C5                    ;455E: BD B7 C5       '...'
         PULX                             ;4561: 38             '8'
         RTS                              ;4562: 39             '9'
+
 M4563   FCB     $45                      ;4563: 45             'E'
         TST     M457E                    ;4564: 7D 45 7E       '}E~'
         FCB     $45                      ;4567: 45             'E'
@@ -15469,31 +15498,31 @@ ZAF0C   PSHA                             ;AF0C: 36             '6'
         RTS                              ;AF20: 39             '9'
 
 
-ZAF21   LDAA    $21,X                    ;AF21: A6 21          '.!'
-ZAF23   PSHA                             ;AF23: 36             '6'
-        PSHB                             ;AF24: 37             '7'
-        BITA    #$80                     ;AF25: 85 80          '..'
-        BNE     ZAF33                    ;AF27: 26 0A          '&.'
-        ANDA    #$0F                     ;AF29: 84 0F          '..'
-        LDAB    #$FC                     ;AF2B: C6 FC          '..'
-        MUL                              ;AF2D: 3D             '='
-        ADDD    #M118C                   ;AF2E: C3 11 8C       '...'
-        BRA     ZAF49                    ;AF31: 20 16          ' .'
-ZAF33   ANDA    #$0F                     ;AF33: 84 0F          '..'
-        CMPA    #$04                     ;AF35: 81 04          '..'
-        BGE     ZAF41                    ;AF37: 2C 08          ',.'
-        LDAB    #$6C                     ;AF39: C6 6C          '.l'
-        MUL                              ;AF3B: 3D             '='
-        ADDD    #M1048                   ;AF3C: C3 10 48       '..H'
-        BRA     ZAF49                    ;AF3F: 20 08          ' .'
-ZAF41   SUBA    #$04                     ;AF41: 80 04          '..'
-        LDAB    #$09                     ;AF43: C6 09          '..'
-        MUL                              ;AF45: 3D             '='
-        ADDD    #M196C                   ;AF46: C3 19 6C       '..l'
-ZAF49   XGDX                             ;AF49: 18             '.'
-        PULB                             ;AF4A: 33             '3'
-        PULA                             ;AF4B: 32             '2'
-        RTS                              ;AF4C: 39             '9'
+ZAF21   LDAA    $21,X   ; A = *X+0x21                   ;AF21: A6 21          
+ZAF23   PSHA            ; push A                        ;AF23: 36             
+        PSHB            ; push B                        ;AF24: 37             
+        BITA    #$80    ; ? A & 0x80                    ;AF25: 85 80          
+        BNE     ZAF33   ; if Z=0 goto ZAF33 (A7=1)      ;AF27: 26 0A          
+        ANDA    #$0F    ; A = A & 0x0F                  ;AF29: 84 0F          
+        LDAB    #$FC    ; B = 0xFC                      ;AF2B: C6 FC          
+        MUL             ; D = A*B                       ;AF2D: 3D             
+        ADDD    #$118C  ; D = D+0x118C                  ;AF2E: C3 11 8C       
+        BRA     ZAF49   ; goto ZAF49                    ;AF31: 20 16          
+ZAF33   ANDA    #$0F    ; A = A & 0x0F                  ;AF33: 84 0F          
+        CMPA    #$04    ; ? A - 4                       ;AF35: 81 04          
+        BGE     ZAF41   ; if A >= 4 goto ZAF41          ;AF37: 2C 08          
+        LDAB    #$6C    ; B = 0x6C                      ;AF39: C6 6C          
+        MUL             ; D = A*B                       ;AF3B: 3D             
+        ADDD    #$1048  ; D = D+0x1048                  ;AF3C: C3 10 48       
+        BRA     ZAF49   ; goto ZAF49                    ;AF3F: 20 08          
+ZAF41   SUBA    #$04    ; A = A - 4                     ;AF41: 80 04          
+        LDAB    #$09    ; B = 9                         ;AF43: C6 09          
+        MUL             ; D = A * B                     ;AF45: 3D             
+        ADDD    #$196C  ; D = D + 0x196C                ;AF46: C3 19 6C       
+ZAF49   XGDX            ; X = D                         ;AF49: 18             
+        PULB            ; pull B                        ;AF4A: 33             
+        PULA            ; pull A                        ;AF4B: 32             
+        RTS             ; return                        ;AF4C: 39             
 
 
 ZAF4D   PSHA                             ;AF4D: 36             '6'
@@ -17575,14 +17604,15 @@ ZBF03   CLRA                             ;BF03: 4F             'O'
 
 
 ; obsluha IC136
-ZBF10   LDX     #$2000  ; X=0x2000                              ;BF10: CE 20 00
+ZBF10   
+        LDX     #$2000  ; X=0x2000                              ;BF10: CE 20 00
         LDD     $01,X   ; D=*0x2001, *0x2002                    ;BF13: EC 01
         STD     $AD     ; *0xAD=*0x2001, *0xAE=*0x2002          ;BF15: DD AD
         LDD     $03,X   ; D=*0x2003, *0x2004                    ;BF17: EC 03
         STD     $AF     ; *0xAF=*0x2003, *0xB0=*0x2004          ;BF19: DD AF
         LDD     $05,X   ; D=*0x2005, *0x2006                    ;BF1B: EC 05
         STD     $B1     ; *0xB1=*0x2005, *0xB2=*0x2006          ;BF1D: DD B1
-        LDAB    0,X     ; B=*0x2000                             ;BF1F: E6 00
+        LDAB    ,X      ; B=*0x2000                             ;BF1F: E6 00
         PSHB            ; PUSH B                                ;BF21: 37   
         ANDB    #$07    ; B = B & 0x07                          ;BF22: C4 07
         LDAA    #$07    ; A=0x07                                ;BF24: 86 07
@@ -17606,7 +17636,7 @@ ZBF10   LDX     #$2000  ; X=0x2000                              ;BF10: CE 20 00
         ANDB    #$8F    ; B = B & 0x8F                          ;BF42: C4 8F
         ABA             ; A=A+B                                 ;BF44: 1B   
         ORAA    #$80    ; A = A | 0x80                          ;BF45: 8A 80
-        STAA    0,X     ; *0x2000=A                             ;BF47: A7 00
+        STAA    ,X      ; *0x2000=A                             ;BF47: A7 00
         TIM     #$F8,$AC        ; ? = *0xAC & 0xF8              ;BF49: 7B F8 AC
         BEQ     ZBF59           ; if Z=1 goto ZBF59             ;BF4C: 27 0B   
         TIM     #$10,$AC        ; ? = *0xAC & 0x10              ;BF4E: 7B 10 AC
@@ -19716,28 +19746,59 @@ ZD004   LDD     #M1A02                   ;D004: CC 1A 02       '...'
         JSR     ZC86B                    ;D048: BD C8 6B       '..k'
         JSR     ZD362                    ;D04B: BD D3 62       '..b'
         RTS                              ;D04E: 39             '9'
-MD04F   FCC     "  PAGING (ALL)    PAG"  ;D04F: 20 20 50 41 47 49 4E 47 20 28 41 4C 4C 29 20 20 20 20 50 41 47 '  PAGING (ALL)    PAG'
-        FCC     "ING (GRP1)   PAGING ("  ;D064: 49 4E 47 20 28 47 52 50 31 29 20 20 20 50 41 47 49 4E 47 20 28 'ING (GRP1)   PAGING ('
-        FCC     "GRP2)    MOH MONITOR "  ;D079: 47 52 50 32 29 20 20 20 20 4D 4F 48 20 4D 4F 4E 49 54 4F 52 20 'GRP2)    MOH MONITOR '
-        FCC     "  EXTERNAL PAGING    "  ;D08E: 20 20 45 58 54 45 52 4E 41 4C 20 50 41 47 49 4E 47 20 20 20 20 '  EXTERNAL PAGING    '
-        FCC     "DAY MODE       NIGHT "  ;D0A3: 44 41 59 20 4D 4F 44 45 20 20 20 20 20 20 20 4E 49 47 48 54 20 'DAY MODE       NIGHT '
-        FCC     "MODE    DO NOT DISTUR"  ;D0B8: 4D 4F 44 45 20 20 20 20 44 4F 20 4E 4F 54 20 44 49 53 54 55 52 'MODE    DO NOT DISTUR'
-        FCC     "B     BGM ON         "  ;D0CD: 42 20 20 20 20 20 42 47 4D 20 4F 4E 20 20 20 20 20 20 20 20 20 'B     BGM ON         '
-        FCC     " BGM OFF      C.PICKU"  ;D0E2: 20 42 47 4D 20 4F 46 46 20 20 20 20 20 20 43 2E 50 49 43 4B 55 ' BGM OFF      C.PICKU'
-        FCC     "P ALLOW  C.PICKUP DEN"  ;D0F7: 50 20 41 4C 4C 4F 57 20 20 43 2E 50 49 43 4B 55 50 20 44 45 4E 'P ALLOW  C.PICKUP DEN'
-        FCC     "Y   FWD/DND CANCEL   "  ;D10C: 59 20 20 20 46 57 44 2F 44 4E 44 20 43 41 4E 43 45 4C 20 20 20 'Y   FWD/DND CANCEL   '
-        FCC     "DATA MODE ON    DATA "  ;D121: 44 41 54 41 20 4D 4F 44 45 20 4F 4E 20 20 20 20 44 41 54 41 20 'DATA MODE ON    DATA '
-        FCC     "MODE OFF  EXT DATA CL"  ;D136: 4D 4F 44 45 20 4F 46 46 20 20 45 58 54 20 44 41 54 41 20 43 4C 'MODE OFF  EXT DATA CL'
-        FCC     "EAR CHECK HEADSET SWA"  ;D14B: 45 41 52 20 43 48 45 43 4B 20 48 45 41 44 53 45 54 20 53 57 41 'EAR CHECK HEADSET SWA'
-        FCC     "UTO CO HUNT OFFAUTO C"  ;D160: 55 54 4F 20 43 4F 20 48 55 4E 54 20 4F 46 46 41 55 54 4F 20 43 'UTO CO HUNT OFFAUTO C'
-        FCC     "O HUNT ON   ID CODE S"  ;D175: 4F 20 48 55 4E 54 20 4F 4E 20 20 20 49 44 20 43 4F 44 45 20 53 'O HUNT ON   ID CODE S'
-        FCC     "ET     ID CODE RESET "  ;D18A: 45 54 20 20 20 20 20 49 44 20 43 4F 44 45 20 52 45 53 45 54 20 'ET     ID CODE RESET '
-        FCC     "        EXT          "  ;D19F: 20 20 20 20 20 20 20 20 45 58 54 20 20 20 20 20 20 20 20 20 20 '        EXT          '
-        FCC     "   CO      "            ;D1B4: 20 20 20 43 4F 20 20 20 20 20 20 '   CO      '
-MD1BF   FCC     " ENTER PGM CODE   PRO"  ;D1BF: 20 45 4E 54 45 52 20 50 47 4D 20 43 4F 44 45 20 20 20 50 52 4F ' ENTER PGM CODE   PRO'
-        FCC     "GRAM MODE    DAY/TIME"  ;D1D4: 47 52 41 4D 20 4D 4F 44 45 20 20 20 20 44 41 59 2F 54 49 4D 45 'GRAM MODE    DAY/TIME'
-        FCC     " SET  ENTER EXT NO   "  ;D1E9: 20 53 45 54 20 20 45 4E 54 45 52 20 45 58 54 20 4E 4F 20 20 20 ' SET  ENTER EXT NO   '
-        FCC     " "                      ;D1FE: 20             ' '
+
+
+MD04F
+        DC      "  PAGING (ALL)  "
+        DC      "  PAGING (GRP1) "
+        DC      "  PAGING (GRP2) "
+        DC      "   MOH MONITOR  "
+        DC      " EXTERNAL PAGING"
+        DC      "    DAY MODE    "
+        DC      "   NIGHT MODE   "
+        DC      " DO NOT DISTURB "
+        DC      "    BGM ON      " 
+        DC      "    BGM OFF     "   
+        DC      " C.PICKUP ALLOW "
+        DC      " C.PICKUP DENY  "
+        DC      " FWD/DND CANCEL "
+        DC      "  DATA MODE ON  "
+        DC      "  DATA MODE OFF "
+        DC      " EXT DATA CLEAR "
+        DC      "CHECK HEADSET SW"
+        DC      "AUTO CO HUNT OFF"
+        DC      "AUTO CO HUNT ON "
+        DC      "  ID CODE SET   "
+        DC      "  ID CODE RESET "
+        DC      "        EXT     "
+        DC      "        CO      "
+        DC      " ENTER PGM CODE "
+        DC      "  PROGRAM MODE  "
+        DC      "  DAY/TIME SET  "
+        DC      "ENTER EXT NO    "
+
+; MD04F   FCC     "  PAGING (ALL)    PAG"  ;D04F: 20 20 50 41 47 49 4E 47 20 28 41 4C 4C 29 20 20 20 20 50 41 47 '  PAGING (ALL)    PAG'
+;         FCC     "ING (GRP1)   PAGING ("  ;D064: 49 4E 47 20 28 47 52 50 31 29 20 20 20 50 41 47 49 4E 47 20 28 'ING (GRP1)   PAGING ('
+;         FCC     "GRP2)    MOH MONITOR "  ;D079: 47 52 50 32 29 20 20 20 20 4D 4F 48 20 4D 4F 4E 49 54 4F 52 20 'GRP2)    MOH MONITOR '
+;         FCC     "  EXTERNAL PAGING    "  ;D08E: 20 20 45 58 54 45 52 4E 41 4C 20 50 41 47 49 4E 47 20 20 20 20 '  EXTERNAL PAGING    '
+;         FCC     "DAY MODE       NIGHT "  ;D0A3: 44 41 59 20 4D 4F 44 45 20 20 20 20 20 20 20 4E 49 47 48 54 20 'DAY MODE       NIGHT '
+;         FCC     "MODE    DO NOT DISTUR"  ;D0B8: 4D 4F 44 45 20 20 20 20 44 4F 20 4E 4F 54 20 44 49 53 54 55 52 'MODE    DO NOT DISTUR'
+;         FCC     "B     BGM ON         "  ;D0CD: 42 20 20 20 20 20 42 47 4D 20 4F 4E 20 20 20 20 20 20 20 20 20 'B     BGM ON         '
+;         FCC     " BGM OFF      C.PICKU"  ;D0E2: 20 42 47 4D 20 4F 46 46 20 20 20 20 20 20 43 2E 50 49 43 4B 55 ' BGM OFF      C.PICKU'
+;         FCC     "P ALLOW  C.PICKUP DEN"  ;D0F7: 50 20 41 4C 4C 4F 57 20 20 43 2E 50 49 43 4B 55 50 20 44 45 4E 'P ALLOW  C.PICKUP DEN'
+;         FCC     "Y   FWD/DND CANCEL   "  ;D10C: 59 20 20 20 46 57 44 2F 44 4E 44 20 43 41 4E 43 45 4C 20 20 20 'Y   FWD/DND CANCEL   '
+;         FCC     "DATA MODE ON    DATA "  ;D121: 44 41 54 41 20 4D 4F 44 45 20 4F 4E 20 20 20 20 44 41 54 41 20 'DATA MODE ON    DATA '
+;         FCC     "MODE OFF  EXT DATA CL"  ;D136: 4D 4F 44 45 20 4F 46 46 20 20 45 58 54 20 44 41 54 41 20 43 4C 'MODE OFF  EXT DATA CL'
+;         FCC     "EAR CHECK HEADSET SWA"  ;D14B: 45 41 52 20 43 48 45 43 4B 20 48 45 41 44 53 45 54 20 53 57 41 'EAR CHECK HEADSET SWA'
+;         FCC     "UTO CO HUNT OFFAUTO C"  ;D160: 55 54 4F 20 43 4F 20 48 55 4E 54 20 4F 46 46 41 55 54 4F 20 43 'UTO CO HUNT OFFAUTO C'
+;         FCC     "O HUNT ON   ID CODE S"  ;D175: 4F 20 48 55 4E 54 20 4F 4E 20 20 20 49 44 20 43 4F 44 45 20 53 'O HUNT ON   ID CODE S'
+;         FCC     "ET     ID CODE RESET "  ;D18A: 45 54 20 20 20 20 20 49 44 20 43 4F 44 45 20 52 45 53 45 54 20 'ET     ID CODE RESET '
+;         FCC     "        EXT          "  ;D19F: 20 20 20 20 20 20 20 20 45 58 54 20 20 20 20 20 20 20 20 20 20 '        EXT          '
+;         FCC     "   CO      "            ;D1B4: 20 20 20 43 4F 20 20 20 20 20 20 '   CO      '
+; MD1BF   FCC     " ENTER PGM CODE   PRO"  ;D1BF: 20 45 4E 54 45 52 20 50 47 4D 20 43 4F 44 45 20 20 20 50 52 4F ' ENTER PGM CODE   PRO'
+;         FCC     "GRAM MODE    DAY/TIME"  ;D1D4: 47 52 41 4D 20 4D 4F 44 45 20 20 20 20 44 41 59 2F 54 49 4D 45 'GRAM MODE    DAY/TIME'
+;         FCC     " SET  ENTER EXT NO   "  ;D1E9: 20 53 45 54 20 20 45 4E 54 45 52 20 45 58 54 20 4E 4F 20 20 20 ' SET  ENTER EXT NO   '
+;         FCC     " "                      ;D1FE: 20             ' '
 ZD1FF   LDAA    M198A                    ;D1FF: B6 19 8A       '...'
         LDAB    #$10                     ;D202: C6 10          '..'
         STAB    M1985                    ;D204: F7 19 85       '...'
@@ -19801,11 +19862,20 @@ ZD291   CMPA    #$05                     ;D291: 81 05          '..'
         STAA    M1992                    ;D298: B7 19 92       '...'
 ZD29B   JSR     ZD362                    ;D29B: BD D3 62       '..b'
         RTS                              ;D29E: 39             '9'
-MD29F   FCC     "FORWARDING EXT    CAM"  ;D29F: 46 4F 52 57 41 52 44 49 4E 47 20 45 58 54 20 20 20 20 43 41 4D 'FORWARDING EXT    CAM'
-        FCC     "P ON EXT     CAMP ON "  ;D2B4: 50 20 4F 4E 20 45 58 54 20 20 20 20 20 43 41 4D 50 20 4F 4E 20 'P ON EXT     CAMP ON '
-        FCC     "CO-      RESTRICTED  "  ;D2C9: 43 4F 2D 20 20 20 20 20 20 52 45 53 54 52 49 43 54 45 44 20 20 'CO-      RESTRICTED  '
-        FCC     "   :NOT STORED      D"  ;D2DE: 20 20 20 3A 4E 4F 54 20 53 54 4F 52 45 44 20 20 20 20 20 20 44 '   :NOT STORED      D'
-        FCC     "OOR-OPEN    "           ;D2F3: 4F 4F 52 2D 4F 50 45 4E 20 20 20 20 'OOR-OPEN    '
+
+MD29F
+        DC      "FORWARDING EXT  "
+        DC      "  CAMP ON EXT   "
+        DC      "  CAMP ON CO-   "
+        DC      "   RESTRICTED   "
+        DC      "  :NOT STORED   "
+        DC      "   DOOR-OPEN    "
+
+; MD29F   FCC     "FORWARDING EXT    CAM"  ;D29F: 46 4F 52 57 41 52 44 49 4E 47 20 45 58 54 20 20 20 20 43 41 4D 'FORWARDING EXT    CAM'
+;         FCC     "P ON EXT     CAMP ON "  ;D2B4: 50 20 4F 4E 20 45 58 54 20 20 20 20 20 43 41 4D 50 20 4F 4E 20 'P ON EXT     CAMP ON '
+;         FCC     "CO-      RESTRICTED  "  ;D2C9: 43 4F 2D 20 20 20 20 20 20 52 45 53 54 52 49 43 54 45 44 20 20 'CO-      RESTRICTED  '
+;         FCC     "   :NOT STORED      D"  ;D2DE: 20 20 20 3A 4E 4F 54 20 53 54 4F 52 45 44 20 20 20 20 20 20 44 '   :NOT STORED      D'
+;         FCC     "OOR-OPEN    "           ;D2F3: 4F 4F 52 2D 4F 50 45 4E 20 20 20 20 'OOR-OPEN    '
         LDAA    #$05                     ;D2FF: 86 05          '..'
         JSR     ZD351                    ;D301: BD D3 51       '..Q'
         TST     M198B                    ;D304: 7D 19 8B       '}..'
@@ -20261,12 +20331,14 @@ MD672   NEGB                             ;D672: 50             'P'
         RORA                             ;D680: 46             'F'
         BRA     ZD6D7                    ;D681: 20 54          ' T'
         BLT     ZD6B3                    ;D683: 2D 2E          '-.'
-ZD685   LDS     #M1FFF                   ;D685: 8E 1F FF       '...'
-        LDX     #M01BE                   ;D688: CE 01 BE       '...'
-        LDAA    #$02                     ;D68B: 86 02          '..'
-        LDAB    #$09                     ;D68D: C6 09          '..'
-        MUL                              ;D68F: 3D             '='
-        CLRA                             ;D690: 4F             'O'
+
+MAIN_FUNCTION        
+        LDS     #$1FFF          ; Stack = 0x1FFF                   ;D685: 8E 1F FF       '...'
+        LDX     #$01BE          ; X  = 0x01BE         ;D688: CE 01 BE       '...'
+        LDAA    #$02            ; A = 2         ;D68B: 86 02          '..'
+        LDAB    #$09            ; B = 9         ;D68D: C6 09          '..'
+        MUL                     ; D = A * B         ;D68F: 3D             '='
+        CLRA                    ; A = 0         ;D690: 4F             'O'
         JSR     ZD835                    ;D691: BD D8 35       '..5'
         LDX     #M01D0                   ;D694: CE 01 D0       '...'
         LDAB    #$02                     ;D697: C6 02          '..'
@@ -20511,6 +20583,8 @@ ZD82A   TSX                              ;D82A: 30             '0'
         INS                              ;D832: 31             '1'
         INS                              ;D833: 31             '1'
         RTS                              ;D834: 39             '9'
+
+
 ZD835   PSHA                             ;D835: 36             '6'
         PSHB                             ;D836: 37             '7'
         PSHX                             ;D837: 3C             '<'
@@ -20525,6 +20599,8 @@ ZD843   PULX                             ;D843: 38             '8'
         PULB                             ;D844: 33             '3'
         PULA                             ;D845: 32             '2'
         RTS                              ;D846: 39             '9'
+
+
 ZD847   LDAB    #$02                     ;D847: C6 02          '..'
         LDAA    #$04                     ;D849: 86 04          '..'
         SWI                              ;D84B: 3F             '?'
@@ -25218,8 +25294,8 @@ ZFC8B   OIM     #$01,M0060               ;FC8B: 72 01 60       'r.`'
 ZFC8E   LDD     M0060                    ;FC8E: DC 60          '.`'
         STD     M2304                    ;FC90: FD 23 04       '.#.'
 ZFC93   JMP     ZFF73                    ;FC93: 7E FF 73       '~.s'
-        JSR     Z3368                    ;FC96: BD 33 68       '.3h'
-        JSR     Z3378                    ;FC99: BD 33 78       '.3x'
+        JSR     INIT_PORTS                    ;FC96: BD 33 68       '.3h'
+        JSR     INIT_GA                    ;FC99: BD 33 78       '.3x'
         LDD     M2300                    ;FC9C: FC 23 00       '.#.'
         SUBD    #Z0000                   ;FC9F: 83 00 00       '...'
         BNE     ZFD06                    ;FCA2: 26 62          '&b'
@@ -25634,13 +25710,13 @@ ZFFC8   CMPA    $3E,X                    ;FFC8: A1 3E          '.>'
         FCB     $00                      ;FFED: 00             '.'
         TSX                              ;FFEE: 30             '0'
         FCB     $00                      ;FFEF: 00             '.'
-svec_DIV0 FDB     hdlr_RST                 ;FFF0: 30 00          '0.'
-svec_SWI3 FDB     hdlr_RST                 ;FFF2: 30 00          '0.'
+svec_DIV0 FDB     MAIN                 ;FFF0: 30 00          '0.'
+svec_SWI3 FDB     MAIN                 ;FFF2: 30 00          '0.'
 svec_SWI2 FDB     hdlr_SWI2                ;FFF4: 35 C1          '5.'
-svec_FIRQ FDB     hdlr_RST                 ;FFF6: 30 00          '0.'
-svec_IRQ FDB     hdlr_RST                 ;FFF8: 30 00          '0.'
+svec_FIRQ FDB     MAIN                 ;FFF6: 30 00          '0.'
+svec_IRQ FDB     MAIN                 ;FFF8: 30 00          '0.'
 svec_SWI FDB     hdlr_SWI                 ;FFFA: D6 C8          '..'
 svec_NMI FDB     hdlr_NMI                 ;FFFC: 44 DC          'D.'
-svec_RST FDB     hdlr_RST                 ;FFFE: 30 00          '0.'
+svec_RST FDB     MAIN                 ;FFFE: 30 00          '0.'
 
         END

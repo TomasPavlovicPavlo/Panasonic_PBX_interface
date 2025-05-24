@@ -13,3 +13,21 @@ DIN packets
 |LCD <12-15>| 1   | 0100 | LCD_12 | LCD_13| LCD_14| LCD_15| 0x00 |   P  |  1  | |
 | | 1   | 0101 |  | | | |  |   P  |  1  | |
 | | 1   | 0110 |  | | | |  |   P  |  1  | |
+
+## disassemble FW dump
+```
+./f9dasm -begin 0x3000 -6303 -noflex -addr -out out.asm KX-T30810B_FW.BIN -info info.info
+```
+
+## assemble source code
+
+```
+./dasm pokus/pokus.asm -oout.bin -llist -v1 -f3
+```
+ - -o*filename* &emsp; output filemane
+ - -l*list* &emsp; listing filename
+ - -v*value* &emsp; verbosity level
+ - -f*value*
+   - 1 &emsp; default
+   - 2 &emsp; RAS
+   - 3 &emsp; RAW - data only
