@@ -4090,6 +4090,446 @@
 			(embedded_fonts no)
 		)
 	)
+	(label "D5"
+		(at 154.94 63.5 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "10876bef-46b8-4c1d-a54e-6b327290d5b0")
+	)
+	(label "A14"
+		(at 154.94 109.22 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "17f51977-da26-4a19-a9ba-b3196d47000e")
+	)
+	(label "A12"
+		(at 154.94 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "181f2cf0-feeb-45bd-9da0-2635df5f9bc3")
+	)
+	(label "D0"
+		(at 233.68 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "18da9076-2bc5-41e7-8e50-7f8d692d3f19")
+	)
+	(label "A6"
+		(at 154.94 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1949bd5f-c32b-470d-8e93-494b1a4cab4f")
+	)
+	(label "A15"
+		(at 154.94 111.76 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "1beb18d4-cd92-4c95-8f63-c6c9cc9219d8")
+	)
+	(label "A2"
+		(at 154.94 76.2 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2092dd1b-7b96-407c-9ca4-6e23e0413082")
+	)
+	(label "~{RD}"
+		(at 154.94 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "21a56357-91a4-45c9-8377-953a35f70247")
+	)
+	(label "A14"
+		(at 232.41 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "2b36cb9e-edd8-4631-8dca-45fef142dcca")
+	)
+	(label "D1"
+		(at 154.94 53.34 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "33c0a137-ff6b-475c-86d7-c23916674b8e")
+	)
+	(label "D2"
+		(at 223.52 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "43b06c1f-149b-416e-9d03-569ed4da663f")
+	)
+	(label "D6"
+		(at 201.93 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "4a324b15-50d3-499b-989f-bfbfa4947e76")
+	)
+	(label "D7"
+		(at 154.94 68.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "4bcd7b4a-c99d-4786-89d1-b4dbebfcae69")
+	)
+	(label "D7"
+		(at 196.85 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "53cc6411-7f94-4392-b7f2-fb9d6de8ae49")
+	)
+	(label "D4"
+		(at 213.36 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "55126e2e-87f3-4abc-aa22-3821e8a6844a")
+	)
+	(label "D0"
+		(at 154.94 50.8 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "578a690d-3b79-4f12-93ee-5f00975e719f")
+	)
+	(label "D4"
+		(at 154.94 60.96 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5aba2ce7-9bc7-4688-b19f-c5d622ce848c")
+	)
+	(label "A10"
+		(at 154.94 99.06 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5bc89639-85f0-49f2-a46b-a43c5b1bf366")
+	)
+	(label "A5"
+		(at 154.94 83.82 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "5fa678a6-0fc9-465a-b9bd-572ea40c1d36")
+	)
+	(label "A4"
+		(at 154.94 81.28 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "61412129-0dbd-4ba2-b283-e6aa14020867")
+	)
+	(label "D2"
+		(at 154.94 55.88 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "67521a9b-ada3-468b-ad3a-0e89d9f72056")
+	)
+	(label "D6"
+		(at 154.94 66.04 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "75585f60-5810-435a-86e2-e4d385b0f2e1")
+	)
+	(label "A7"
+		(at 154.94 88.9 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "755fdeb9-ed36-4310-aec3-40f188506c0c")
+	)
+	(label "A11"
+		(at 254 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "76940d5a-3c35-4341-9e32-c6ac88387b60")
+	)
+	(label "A13"
+		(at 256.54 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "77a27b02-04eb-439d-b6fe-cc6ea9178902")
+	)
+	(label "A9"
+		(at 154.94 96.52 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "800becc4-452f-478a-b2ec-044316de005a")
+	)
+	(label "A9"
+		(at 251.46 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "8c6954f0-671d-4900-bb2a-106a2fc4670c")
+	)
+	(label "~{WR}"
+		(at 191.77 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "90e43987-a589-46e1-8e6f-9ec856ef8984")
+	)
+	(label "D3"
+		(at 218.44 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a91b2ce1-3cc4-4180-8736-81d4b74b9a7d")
+	)
+	(label "A13"
+		(at 154.94 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "b06ae55c-d8bd-4bbe-b3fc-4a57b78962a9")
+	)
+	(label "A12"
+		(at 229.87 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "bc0f8008-1ff8-425e-902f-b7154d8c7086")
+	)
+	(label "A10"
+		(at 227.33 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "c728d8ef-e779-48ad-a54c-1a7c6ece0f58")
+	)
+	(label "D1"
+		(at 228.6 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "d05bfa14-477d-4c05-9902-bdcb89dda294")
+	)
+	(label "VCC"
+		(at 154.94 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "dd53260b-f0c3-44c2-b214-9029b82f4f68")
+	)
+	(label "A15"
+		(at 259.08 50.8 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "e4d88778-035a-434a-bd52-61043d23a04c")
+	)
+	(label "A11"
+		(at 154.94 101.6 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e4d9699d-b4a0-4f64-ae5c-56dd41cd1ef0")
+	)
+	(label "A3"
+		(at 154.94 78.74 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e5034e34-1835-4363-a1d1-0b889aab55bb")
+	)
+	(label "A1"
+		(at 154.94 73.66 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "eab73bf8-1e40-43db-a2e2-aa4d8a44450d")
+	)
+	(label "A0"
+		(at 154.94 71.12 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "ee2e22b2-06a8-45aa-ab4b-519b47cde2cb")
+	)
+	(label "GND"
+		(at 154.94 91.44 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f3e29b9a-ad42-4e34-9301-af31c1433f07")
+	)
+	(label "D5"
+		(at 207.01 36.83 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "f8ab6df7-3712-4760-85ee-fc62954957ec")
+	)
+	(label "D3"
+		(at 154.94 58.42 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "f8f6db03-b5dd-4c84-a188-ab5be3135874")
+	)
+	(label "~{WR}"
+		(at 154.94 40.64 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fb2da957-2329-4da2-8382-321ab31ccf89")
+	)
+	(label "~{RD}"
+		(at 185.42 31.75 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "ff6057bd-0f76-46af-86a0-fcdbdb1c6fdb")
+	)
 	(symbol
 		(lib_id "Device:R_Small")
 		(at 218.44 34.29 0)
@@ -4118,7 +4558,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 218.44 34.29 0)
 			(effects
 				(font
@@ -4188,7 +4628,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 185.42 34.29 0)
 			(effects
 				(font
@@ -4258,7 +4698,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 191.77 34.29 0)
 			(effects
 				(font
@@ -4328,7 +4768,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 201.93 34.29 0)
 			(effects
 				(font
@@ -4756,7 +5196,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 207.01 34.29 0)
 			(effects
 				(font
@@ -5266,7 +5706,7 @@
 				)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_DIP:CERDIP-16_W7.62mm_SideBrazed"
 			(at 195.58 96.52 0)
 			(effects
 				(font
@@ -5470,7 +5910,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 196.85 34.29 0)
 			(effects
 				(font
@@ -5540,7 +5980,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 223.52 34.29 0)
 			(effects
 				(font
@@ -5790,7 +6230,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Package_DIP:CERDIP-16_W7.62mm_SideBrazed"
 			(at 195.58 120.65 0)
 			(effects
 				(font
@@ -6418,7 +6858,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 228.6 34.29 0)
 			(effects
 				(font
@@ -6696,7 +7136,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 233.68 34.29 0)
 			(effects
 				(font
@@ -6766,7 +7206,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "Resistor_THT:R_Axial_DIN0204_L3.6mm_D1.6mm_P5.08mm_Horizontal"
+		(property "Footprint" "_mine:R_Axial_L3.6mm_D1.6mm_P4.5mm_Horizontal"
 			(at 213.36 34.29 0)
 			(effects
 				(font
