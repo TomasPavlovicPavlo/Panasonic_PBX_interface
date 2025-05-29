@@ -20333,30 +20333,30 @@ MD672   NEGB                             ;D672: 50             'P'
         BLT     ZD6B3                    ;D683: 2D 2E          '-.'
 
 MAIN_FUNCTION        
-        LDS     #$1FFF          ; Stack = 0x1FFF                   ;D685: 8E 1F FF       '...'
-        LDX     #$01BE          ; X  = 0x01BE         ;D688: CE 01 BE       '...'
-        LDAA    #$02            ; A = 2         ;D68B: 86 02          '..'
-        LDAB    #$09            ; B = 9         ;D68D: C6 09          '..'
-        MUL                     ; D = A * B         ;D68F: 3D             '='
-        CLRA                    ; A = 0         ;D690: 4F             'O'
-        JSR     ZD835                    ;D691: BD D8 35       '..5'
-        LDX     #M01D0                   ;D694: CE 01 D0       '...'
-        LDAB    #$02                     ;D697: C6 02          '..'
-        LDAA    #$10                     ;D699: 86 10          '..'
-        JSR     ZD835                    ;D69B: BD D8 35       '..5'
-        LDX     #M01D2                   ;D69E: CE 01 D2       '...'
-        LDAB    #$04                     ;D6A1: C6 04          '..'
-        CLRA                             ;D6A3: 4F             'O'
-        JSR     ZD835                    ;D6A4: BD D8 35       '..5'
-        LDX     #M01D7                   ;D6A7: CE 01 D7       '...'
-        LDAB    #$00                     ;D6AA: C6 00          '..'
-        SUBB    #$00                     ;D6AC: C0 00          '..'
-        INCB                             ;D6AE: 5C             '\'
-        ASLB                             ;D6AF: 58             'X'
-        JSR     ZD835                    ;D6B0: BD D8 35       '..5'
+        LDS     #$1FFF          ; Stack = 0x1FFF                ;D685: 8E 1F FF       
+        LDX     #$01BE          ; X  = 0x01BE                   ;D688: CE 01 BE       
+        LDAA    #$02            ; A = 2                         ;D68B: 86 02          
+        LDAB    #$09            ; B = 9                         ;D68D: C6 09          
+        MUL                     ; D = A * B                     ;D68F: 3D             
+        CLRA                    ; A = 0                         ;D690: 4F             
+        JSR     FILL_MEM        ; 0x01BE - 0x01CF = 0           ;D691: BD D8 35       
+        LDX     #$01D0          ; X  = 0x01D0                   ;D694: CE 01 D0       
+        LDAB    #$02            ; B == 2                        ;D697: C6 02          
+        LDAA    #$10            ; A == 0x10                     ;D699: 86 10          
+        JSR     FILL_MEM        ; 0x01D0 - 0x01D1 = 0x10        ;D69B: BD D8 35       
+        LDX     #$01D2          ; X == 0x01D2                   ;D69E: CE 01 D2       
+        LDAB    #$04            ; B == 4                        ;D6A1: C6 04          
+        CLRA                    ; A = 0                         ;D6A3: 4F             
+        JSR     FILL_MEM        ; 0x01D2 - 0x01D5 = 0           ;D6A4: BD D8 35       
+        LDX     #$01D7          ; X == 0x01D7                   ;D6A7: CE 01 D7       
+        LDAB    #$00            ; B == 0                        ;D6AA: C6 00          
+        SUBB    #$00            ; A == 0                        ;D6AC: C0 00          
+        INCB                    ; B == 1                        ;D6AE: 5C             
+        ASLB                    ; B == 2                        ;D6AF: 58             
+        JSR     FILL_MEM        ; 0x01D7 - 0x01D8 = 0           ;D6B0: BD D8 35       
 ZD6B3   CLI                              ;D6B3: 0E             '.'
         LDAA    #$01                     ;D6B4: 86 01          '..'
-        STAA    M01BD                    ;D6B6: B7 01 BD       '...'
+        STAA    $01BD                    ;D6B6: B7 01 BD       '...'
         LDAB    #$00                     ;D6B9: C6 00          '..'
         CLRA                             ;D6BB: 4F             'O'
         SWI                              ;D6BC: 3F             '?'
@@ -20401,7 +20401,7 @@ MD6C0   TSX                              ;D6C0: 30             '0'
         XGDX                             ;D6FA: 18             '.'
         CLRA                             ;D6FB: 4F             'O'
         LDAB    #$05                     ;D6FC: C6 05          '..'
-        JSR     ZD835                    ;D6FE: BD D8 35       '..5'
+        JSR     FILL_MEM                    ;D6FE: BD D8 35       '..5'
         ABX                              ;D701: 3A             ':'
 MD702   PSHX                             ;D702: 3C             '<'
         JSR     ZD7C8                    ;D703: BD D7 C8       '...'
@@ -20585,20 +20585,22 @@ ZD82A   TSX                              ;D82A: 30             '0'
         RTS                              ;D834: 39             '9'
 
 
-ZD835   PSHA                             ;D835: 36             '6'
-        PSHB                             ;D836: 37             '7'
-        PSHX                             ;D837: 3C             '<'
-        TSTB                             ;D838: 5D             ']'
-        BEQ     ZD843                    ;D839: 27 08          ''.'
-ZD83B   STAA    ,X                       ;D83B: A7 00          '..'
-        DECB                             ;D83D: 5A             'Z'
-        BEQ     ZD843                    ;D83E: 27 03          ''.'
-        INX                              ;D840: 08             '.'
-        BRA     ZD83B                    ;D841: 20 F8          ' .'
-ZD843   PULX                             ;D843: 38             '8'
-        PULB                             ;D844: 33             '3'
-        PULA                             ;D845: 32             '2'
-        RTS                              ;D846: 39             '9'
+; fill memory from X to X+(B-1) with value in A
+FILL_MEM
+        PSHA            ; save A                                ;D835: 36             
+        PSHB            ; save B                                ;D836: 37             
+        PSHX            ; save X                                ;D837: 3C             
+        TSTB            ; ? B                                   ;D838: 5D             
+        BEQ     ZD843   ; if B == 0 got ZD843                   ;D839: 27 08          
+ZD83B   STAA    ,X      ; *X = A                                ;D83B: A7 00          
+        DECB            ; B--                                   ;D83D: 5A             
+        BEQ     ZD843   ; if B == 0 got ZD843                   ;D83E: 27 03          
+        INX             ; X++                                   ;D840: 08             
+        BRA     ZD83B   ; goto ZD83B                            ;D841: 20 F8          
+ZD843   PULX            ; reload X                              ;D843: 38             
+        PULB            ; reload b                              ;D844: 33             
+        PULA            ; reload A                              ;D845: 32             
+        RTS             ; return                                ;D846: 39             
 
 
 ZD847   LDAB    #$02                     ;D847: C6 02          '..'
@@ -20726,7 +20728,7 @@ ZD909   TIM     #$01,$03,X               ;D909: 6B 01 03       'k..'
         LDX     #M01EA                   ;D931: CE 01 EA       '...'
         CLRA                             ;D934: 4F             'O'
         LDAB    #$04                     ;D935: C6 04          '..'
-        JSR     ZD835                    ;D937: BD D8 35       '..5'
+        JSR     FILL_MEM                    ;D937: BD D8 35       '..5'
         LDX     #M01E9                   ;D93A: CE 01 E9       '...'
         AIM     #$F0,$00,X               ;D93D: 61 F0 00       'a..'
         OIM     #$0D,$00,X               ;D940: 62 0D 00       'b..'
@@ -20806,7 +20808,7 @@ ZD9A0   PSHA                             ;D9A0: 36             '6'
 ZD9C8   CLRA                             ;D9C8: 4F             'O'
         LDAB    #$05                     ;D9C9: C6 05          '..'
         LDX     #M01E9                   ;D9CB: CE 01 E9       '...'
-        JSR     ZD835                    ;D9CE: BD D8 35       '..5'
+        JSR     FILL_MEM                    ;D9CE: BD D8 35       '..5'
         RTS                              ;D9D1: 39             '9'
 ZD9D2   TSX                              ;D9D2: 30             '0'
         LDAA    $06,X                    ;D9D3: A6 06          '..'
@@ -21027,7 +21029,7 @@ ZDB1D   JSR     ZD9C8                    ;DB1D: BD D9 C8       '...'
         SUBB    M01F2                    ;DB51: F0 01 F2       '...'
         INCB                             ;DB54: 5C             '\'
         LDAA    #$20                     ;DB55: 86 20          '. '
-        JSR     ZD835                    ;DB57: BD D8 35       '..5'
+        JSR     FILL_MEM                    ;DB57: BD D8 35       '..5'
         RTS                              ;DB5A: 39             '9'
 ZDB5B   BSR     ZDB1D                    ;DB5B: 8D C0          '..'
         LDAA    M01EA                    ;DB5D: B6 01 EA       '...'
@@ -21874,7 +21876,7 @@ ZE19B   CLR     M01F6                    ;E19B: 7F 01 F6       '...'
         LDX     #M01F8                   ;E1A1: CE 01 F8       '...'
         LDAB    #$10                     ;E1A4: C6 10          '..'
         LDAA    #$FF                     ;E1A6: 86 FF          '..'
-        JSR     ZD835                    ;E1A8: BD D8 35       '..5'
+        JSR     FILL_MEM                    ;E1A8: BD D8 35       '..5'
         RTS                              ;E1AB: 39             '9'
 ZE1AC   PSHA                             ;E1AC: 36             '6'
         PSHX                             ;E1AD: 3C             '<'
