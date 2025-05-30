@@ -20354,34 +20354,37 @@ MAIN_FUNCTION
         INCB                    ; B == 1                        ;D6AE: 5C             
         ASLB                    ; B == 2                        ;D6AF: 58             
         JSR     FILL_MEM        ; 0x01D7 - 0x01D8 = 0           ;D6B0: BD D8 35       
-ZD6B3   CLI                              ;D6B3: 0E             '.'
-        LDAA    #$01                     ;D6B4: 86 01          '..'
-        STAA    $01BD                    ;D6B6: B7 01 BD       '...'
-        LDAB    #$00                     ;D6B9: C6 00          '..'
-        CLRA                             ;D6BB: 4F             'O'
-        SWI                              ;D6BC: 3F             '?'
+ZD6B3   CLI                     ; Enable Interrupts             ;D6B3: 0E             '.'
+        LDAA    #$01            ; A == 0x01                     ;D6B4: 86 01          '..'
+        STAA    $01BD           ; *0x01BD = 1                   ;D6B6: B7 01 BD       '...'
+        LDAB    #$00            ; B = 0                         ;D6B9: C6 00          '..'
+        CLRA                    ; A = 0                         ;D6BB: 4F             'O'
+        SWI                     ; SW interrupt goto  0xD6C8     ;D6BC: 3F             '?'
         LDAA    #$01                     ;D6BD: 86 01          '..'
         SWI                              ;D6BF: 3F             '?'
 MD6C0   TSX                              ;D6C0: 30             '0'
         FCB     $13                      ;D6C1: 13             '.'
         FCB     $1F                      ;D6C2: 1F             '.'
-        EORB    MDC1A                    ;D6C3: F8 DC 1A       '...'
+        EORB    $DC1A                    ;D6C3: F8 DC 1A       '...'
         FCB     $1E                      ;D6C6: 1E             '.'
-        EORB    M37CE                    ;D6C7: F8 37 CE       '.7.'
-        LDAB    M00D4                    ;D6CA: D6 D4          '..'
-        TAB                              ;D6CC: 16             '.'
-        ASLB                             ;D6CD: 58             'X'
-        ABX                              ;D6CE: 3A             ':'
-        PULB                             ;D6CF: 33             '3'
-        LDX     ,X                       ;D6D0: EE 00          '..'
+        EORB    $37CE                    ;D6C7: F8 37 CE       '.7.'
+
+SWI_D6C8
+        PSHB                    ; store B                       ;D6C8: 37        
+        LDX #$D6D4              ; X = 0xD6D4                    ;D6C9: CE D6 D4
+        TAB                     ; A = B                         ;D6CC: 16             '.'
+        ASLB                    ; shift left B                  ;D6CD: 58             'X'
+        ABX                     ; X = X + B                     ;D6CE: 3A             ':'
+        PULB                    ; restore B                     ;D6CF: 33             '3'
+        LDX     ,X              ; IXH = A                       ;D6D0: EE 00          '..'
         JMP     ,X                       ;D6D2: 6E 00          'n.'
-        LDAB    M00DE                    ;D6D4: D6 DE          '..'
+        LDAB    $DE                    ;D6D4: D6 DE          '..'
         STAB    TCSR1                    ;D6D6: D7 08          '..'
         FCB     $00                      ;D6D8: 00             '.'
         FCB     $00                      ;D6D9: 00             '.'
-        STAB    M0045                    ;D6DA: D7 45          '.E'
-        STAB    M0086                    ;D6DC: D7 86          '..'
-        LDX     #M01D0                   ;D6DE: CE 01 D0       '...'
+        STAB    $45                    ;D6DA: D7 45          '.E'
+        STAB    $86                    ;D6DC: D7 86          '..'
+        LDX     #$01D0                   ;D6DE: CE 01 D0       '...'
         ABX                              ;D6E1: 3A             ':'
         LDAA    #$40                     ;D6E2: 86 40          '.@'
         STAA    ,X                       ;D6E4: A7 00          '..'
@@ -25677,6 +25680,7 @@ ZFFBA   LDAA    #$56                     ;FFBA: 86 56          '.V'
         LDAA    #$27                     ;FFC6: 86 27          '.''
 ZFFC8   CMPA    $3E,X                    ;FFC8: A1 3E          '.>'
         JMP     Z3C49                    ;FFCA: 7E 3C 49       '~<I'
+
         NOP                              ;FFCD: 01             '.'
         NOP                              ;FFCE: 01             '.'
         NOP                              ;FFCF: 01             '.'
@@ -25706,19 +25710,16 @@ ZFFC8   CMPA    $3E,X                    ;FFC8: A1 3E          '.>'
         NOP                              ;FFE7: 01             '.'
         NOP                              ;FFE8: 01             '.'
         NOP                              ;FFE9: 01             '.'
-        TSX                              ;FFEA: 30             '0'
-        FCB     $00                      ;FFEB: 00             '.'
-        TSX                              ;FFEC: 30             '0'
-        FCB     $00                      ;FFED: 00             '.'
-        TSX                              ;FFEE: 30             '0'
-        FCB     $00                      ;FFEF: 00             '.'
-svec_DIV0 FDB     MAIN                 ;FFF0: 30 00          '0.'
-svec_SWI3 FDB     MAIN                 ;FFF2: 30 00          '0.'
-svec_SWI2 FDB     hdlr_SWI2                ;FFF4: 35 C1          '5.'
-svec_FIRQ FDB     MAIN                 ;FFF6: 30 00          '0.'
-svec_IRQ FDB     MAIN                 ;FFF8: 30 00          '0.'
-svec_SWI FDB     hdlr_SWI                 ;FFFA: D6 C8          '..'
-svec_NMI FDB     hdlr_NMI                 ;FFFC: 44 DC          'D.'
-svec_RST FDB     MAIN                 ;FFFE: 30 00          '0.'
+        FDB       $3000         ; IRQ2 goto 0x3000      ;FFEA: 30 00
+        FDB       $3000         ; CMI goto  0x3000      ;FFEC: 30 00
+        FDB       $3000         ; TRAP goto 0x3000      ;FFEE: 30 00
+svec_DIV0 FDB     MAIN          ; SIO goto  0x3000      ;FFF0: 30 00          
+svec_SWI3 FDB     MAIN          ; TOI goto  0x3000      ;FFF2: 30 00          
+svec_SWI2 FDB     hdlr_SWI2     ; OCI goto  0x3000      ;FFF4: 35 C1          
+svec_FIRQ FDB     MAIN          ; ICI goto  0x3000      ;FFF6: 30 00          
+svec_IRQ FDB     MAIN           ; IRQ1 goto 0x3000      ;FFF8: 30 00          
+svec_SWI FDB     hdlr_SWI       ; SWI goto  0xD6C8      ;FFFA: D6 C8          
+svec_NMI FDB     hdlr_NMI       ; NMI goto  0x44DC      ;FFFC: 44 DC          
+svec_RST FDB     MAIN           ; RES goto  0x3000      ;FFFE: 30 00          
 
         END
