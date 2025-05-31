@@ -36,6 +36,15 @@
 ; $B2 <- $2006
 
 
+; Reset values:
+; 0x01BE - 0x01CF = 0                  
+; 0x01D0 - 0x01D1 = 0x10               
+; 0x01D2 - 0x01D5 = 0                  
+; 0x01D7 - 0x01D8 = 0                  
+; 0x01BD = 1
+; 0x01BE - 0x01C2 = 0
+
+
 
 ;****************************************************
 ;* Internal Registers                                      *
@@ -56,9 +65,7 @@ OCR1H equ $000B         ; Output Compare Register 1 High        R/W     $FF
 OCR1L equ $000C         ; Output Compare Register 1 Low         R/W     $FF
 ICRH  equ $000D         ; Input Capture Register High           R       $00
 ICRL  equ $000E         ; Input Capture Register Low            R       $00
-TCSR2 equ $000F         ; Timer Control/Status Register 2       R/W     $10
-RMCR  equ $0010         ; Rate, Mode Control Register           R/W     $00
-TRCSR1 equ $0011        ; Tx/Rx Control Status Register         R/W     $20
+TCSR2 equ $000F         ; Tx/Rx Control Status Register         R/W     $20
 RDR   equ $0012         ; Receive Data Register                 R       $00
 TDR   equ $0013         ; Transmit Data Register                W       $00
 RP5CR equ $0014         ; RAM/Port5 Control register            R/W     $7C or $Fc
@@ -20369,7 +20376,7 @@ MD6C0   TSX                              ;D6C0: 30             '0'
         FCB     $1E                      ;D6C6: 1E             '.'
         EORB    $37CE                    ;D6C7: F8 37 CE       '.7.'
 
-SWI_D6C8
+svec_SWI        ;D6C8
         PSHB                    ; store B                       ;D6C8: 37        
         LDX #$D6D4              ; X = 0xD6D4                    ;D6C9: CE D6 D4
         TAB                     ; A = B                         ;D6CC: 16             '.'
@@ -20388,7 +20395,7 @@ SWI_D6C8
         ABX                              ;D6E1: 3A             ':'
         LDAA    #$40                     ;D6E2: 86 40          '.@'
         STAA    ,X                       ;D6E4: A7 00          '..'
-        LDX     #MD6C0                   ;D6E6: CE D6 C0       '...'
+        LDX     #$D6C0                   ;D6E6: CE D6 C0       '...'
         PSHB                             ;D6E9: 37             '7'
         ASLB                             ;D6EA: 58             'X'
         ASLB                             ;D6EB: 58             'X'
@@ -20400,11 +20407,11 @@ SWI_D6C8
         TSX                              ;D6F3: 30             '0'
         LDAB    $03,X                    ;D6F4: E6 03          '..'
         MUL                              ;D6F6: 3D             '='
-        ADDD    #M01BE                   ;D6F7: C3 01 BE       '...'
+        ADDD    #$01BE                   ;D6F7: C3 01 BE       '...'
         XGDX                             ;D6FA: 18             '.'
         CLRA                             ;D6FB: 4F             'O'
         LDAB    #$05                     ;D6FC: C6 05          '..'
-        JSR     FILL_MEM                    ;D6FE: BD D8 35       '..5'
+        JSR     FILL_MEM        ; A=0,B=5,X=01BE, 0x01BE - 0x01C2 = 0                    ;D6FE: BD D8 35       '..5'
         ABX                              ;D701: 3A             ':'
 MD702   PSHX                             ;D702: 3C             '<'
         JSR     ZD7C8                    ;D703: BD D7 C8       '...'
@@ -20513,6 +20520,8 @@ ZD7BD   INS                              ;D7BD: 31             '1'
         LDAA    #$40                     ;D7C3: 86 40          '.@'
         STAA    ,X                       ;D7C5: A7 00          '..'
         RTI                              ;D7C7: 3B             ';'
+
+
 ZD7C8   TSX                              ;D7C8: 30             '0'
         LDAB    $06,X                    ;D7C9: E6 06          '..'
         BEQ     ZD7EB                    ;D7CB: 27 1E          ''.'
@@ -20542,6 +20551,8 @@ ZD7EB   TSX                              ;D7EB: 30             '0'
         INS                              ;D7F3: 31             '1'
         INS                              ;D7F4: 31             '1'
         RTS                              ;D7F5: 39             '9'
+
+
 ZD7F6   TSX                              ;D7F6: 30             '0'
         LDAB    $06,X                    ;D7F7: E6 06          '..'
         BEQ     ZD82A                    ;D7F9: 27 2F          ''/'
