@@ -46,25 +46,27 @@ class CPU(object):
         self.TSTREG= 0      # 0x1F  Test Register                         -       -
 
         self.RAM = [0] * 0x3000
+        # self.RAM = [0] * 0x30
 
         
     def loadProgram(self, program):
-        self.prg = program
+        self.code = program
 
     def cycle(self):
         self.instruction = self.fetchInstruction(self.PC)
-        if(self.debug):   print(hex(self.PC) + "\t", end='')
+        oldPC=self.PC
+        # if(self.debug):   print(f"0x{self.PC:04X}\t", end='')
 
-        self.execute_instruction(self.instruction)
+        return f"0x{oldPC:04X}\t{self.execute_instruction(self.instruction)}"
 
 
     def fetchInstruction(self, address):
-        return(self.prg[address])
+        return(self.code[address])
 
     def reset(self):
-        self.PC = self.prg[0xFFFE]
+        self.PC = self.code[0xFFFE]
         self.PC = self.PC * 0x100
-        self.PC += self.prg[0xFFFF]
+        self.PC += self.code[0xFFFF]
 
     def RAM_read(self, address):
         return self.RAM_access(address, "r", 0)
@@ -130,28 +132,46 @@ class CPU(object):
             elif dir == "w":
                 self.RAM[address] = data
 
+    def evaluate_half_carry(self, byte1, byte2):
+        result = byte1 + byte2
+        if (byte1 & 0x08 and byte2 & 0x08) or (byte1 & 0x08 and result & 0x08) or (byte2 & 0x08 and result & 0x08):
+            self.H = 1
+        else:
+            self.H = 0
+
+
     def evaluate_flags(self, byte, flags):
+        # Carry
         if flags[5] == '0':
             self.C = 0
         elif flags[5] == '1':
             self.C = 1
         elif flags[5] == 'X':
-            pass
+            if byte & 0x100 != 0:
+                self.C = 1
+            else:
+                self.C = 0
+        # Overflow
         if flags[4] == '0':
             self.V = 0
         elif flags[4] == '1':
             self.V = 1
         elif flags[4] == 'X':
-            pass
+            if byte > 0xFF:
+                self.V = 1
+            else:
+                self.V = 0
+        # Zero
         if flags[3] == '0':
             self.Z = 0
         elif flags[3] == '1':
             self.Z = 1
         elif flags[3] == 'X':
-            if byte == 0:
+            if byte & 0xFF == 0:
                 self.Z = 1
             else:
                 self.Z = 0
+        # Negative
         if flags[2] == '0':
             self.N = 0
         elif flags[2] == '1':
@@ -161,41 +181,101 @@ class CPU(object):
                 self.N = 1
             else:
                 self.N = 0
+        # Interrupt
+        if flags[1] == '0':
+            self.I = 0
+        elif flags[1] == '1':
+            self.I = 1
+        # Halfcarry
+        if flags[0] == '0':
+            self.H = 0
+        elif flags[0] == '1':
+            self.H = 1
+        
 
 
     def execute_instruction(self, instruction):
 
-        # ANDA #    AND a byte to a register A
-        if self.instruction == 0x84:
-            self.A &= self.prg[self.PC+1]
-            self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("ANDA #$" + hex(self.prg[self.PC+1])[2:] + "\t; AND a byte to a register A, A = " + hex(self.A))
+        # ABA    Add B to A
+        if self.instruction == 0x1B:
+            self.evaluate_half_carry(self.A, self.B)
+            oldA = self.A
+            self.A += self.B
+            self.evaluate_flags(self.A, "X-XXXX")
+            self.A &= 0xFF
+            self.PC += 1
+            return   f"ABA\t\t; Add B to A, A = 0x{oldA:02X} + 0x{self.B:02X} = 0x{self.A:02X}"
+            # if(self.debug):   print(f"ABA\t\t; Add B to A, A = 0x{oldA:02X} + 0x{self.B:02X} = 0x{self.A:02X}")
+
+        # ABX    Add B to X
+        elif self.instruction == 0x3A:
+            oldX = self.X
+            self.X += self.B
+            self.PC += 1
+            return f"ABX\t\t; Add B to X, X = 0x{oldX:04X} + 0x{self.B:02X} = 0x{self.X:04X}"
+
+
+# 1B  1 1  ABA        X-XXXX   Add B to A
+# 3A  1 1  ABX        ------   Add B to X
+
+
+        # ADCA #     X-XXXX   Add both carry flag and # to A.
+        elif self.instruction == 0x89:
+            oldPC = self.PC
+            self.evaluate_half_carry(self.A, self.code[self.PC+1])
+            oldA = self.A
+            self.A += self.code[self.PC+1]
+            self.A += self.C
+            self.evaluate_flags(self.A, "X-XXXX")
+            self.A &= 0xFF
             self.PC += 2
+            return f"ADCA #${self.code[oldPC+1]:02X}\t; Add both carry flag and # to A, A = 0x{oldA:02X} + 0x{self.code[oldPC+1]:02X} = 0x{self.A:02X}"
+
+# 89  2 2  ADCA #     X-XXXX   Add both carry flag and given value to register.
+# 99  2 3  ADCA 0m    X-XXXX
+# A9  2 4  ADCA d,X   X-XXXX
+# B9  3 4  ADCA mm    X-XXXX
+# C9  2 2  ADCB #     X-XXXX
+# D9  2 3  ADCB 0m    X-XXXX
+# E9  2 4  ADCB d,X   X-XXXX
+# F9  3 4  ADCB mm    X-XXXX
+
+
+
+        # ANDA #    AND a byte to a register A
+        elif self.instruction == 0x84:
+            oldPC = self.PC
+            self.A &= self.code[self.PC+1]
+            self.evaluate_flags(self.A, "--XX0-")
+            self.PC += 2
+            return f"ANDA #${self.code[oldPC+1]:02X}\t; AND a # to a register A, A = 0x{self.A:02X}"
 
         # ANDA 0m    AND a byte to a register A
         elif self.instruction == 0x94:
-            self.A &= self.RAM_read(self.prg[self.PC+1])
+            oldPC = self.PC
+            self.A &= self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("ANDA $" + hex(self.prg[self.PC+1])[2:] + "\t; AND a byte to a register A, A = " + hex(self.A))
             self.PC += 2
+            return f"ANDA ${self.code[oldPC+1]:02X}\t; AND a 0m to a register A, A = 0x{self.A:02X}"
 
         # ANDA d,X    AND a byte to a register A
         elif self.instruction == 0xA4:
-            address = self.X + self.prg[self.PC+1]
+            oldPC = self.PC
+            address = self.X + self.code[self.PC+1]
             self.A &= self.RAM_read(address)
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("ANDA $" + hex(address)[2:] + "\t; AND a byte to a register A, A = " + hex(self.A))
             self.PC += 2
+            return f"ANDA ${self.code[oldPC+1]:04X},X\t; AND a d,X to a register A, A = 0x{self.A:02X}, X = 0x{self.X:04X}"
 
         # ANDA mm    AND a byte to a register A
         elif self.instruction == 0xB4:
-            address = self.prg[self.PC+1]
+            address = self.code[self.PC+1]
             address *= 0x100
-            address += self.prg[self.PC+2]
+            address += self.code[self.PC+2]
             self.A &= self.RAM_read(address)
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("ANDA $" + hex(address)[2:] + "\t; AND a byte to a register A, A = " + hex(self.A))
             self.PC += 3
+            return f"ANDA ${address:04X}\t; AND a mm to a register A, A = 0x{self.A:02X}"
 
 # 84  2 2  ANDA #     --XX0-   AND a byte to a register 
 # 94  2 3  ANDA 0m    --XX0-
@@ -204,34 +284,38 @@ class CPU(object):
 
         # ANDB #    AND a byte to a register B
         elif self.instruction == 0xC4:
-            self.B &= self.prg[self.PC+1]
-            if(self.debug):   print("ANDB #$" + hex(self.prg[self.PC+1])[2:] + "\t; AND a byte to a register B, B = " + hex(self.B))
+            oldPC = self.PC
+            self.B &= self.code[self.PC+1]
+            self.evaluate_flags(self.A, "--XX0-")
             self.PC += 2
+            return f"ANDB #${self.code[oldPC+1]:02X}\t; AND a # to a register B, B = 0x{self.B:02X}"
 
         # ANDB 0m    AND a byte to a register B
         elif self.instruction == 0xD4:
-            self.B &= self.RAM_read(self.prg[self.PC+1])
+            oldPC = self.PC
+            self.B &= self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("ANDB $" + hex(self.prg[self.PC+1])[2:] + "\t; AND a byte to a register B, B = " + hex(self.B))
             self.PC += 2
+            return f"ANDB ${self.code[oldPC+1]:02X}\t; AND a 0m to a register B, B = 0x{self.B:02X}"
 
         # ANDB d,X    AND a byte to a register B
         elif self.instruction == 0xE4:
-            address = self.X + self.prg[self.PC+1]
+            oldPC = self.PC
+            address = self.X + self.code[self.PC+1]
             self.B &= self.RAM_read(address)
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("ANDB $" + hex(address)[2:] + "\t; AND a byte to a register B, B = " + hex(self.B))
             self.PC += 2
+            return f"ANDB ${self.code[oldPC+1]:04X},X\t; AND a d,X to a register B, B = 0x{self.B:02X}, X = 0x{self.X:04X}"
 
         # ANDB mm    AND a byte to a register B
         elif self.instruction == 0xF4:
-            address = self.prg[self.PC+1]
+            address = self.code[self.PC+1]
             address *= 0x100
-            address += self.prg[self.PC+2]
+            address += self.code[self.PC+2]
             self.B &= self.RAM_read(address)
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("ANDB $" + hex(address)[2:] + "\t; AND a byte to a register B, B = " + hex(self.B))
             self.PC += 3
+            return f"ANDB ${address:04X}\t; AND a mm to a register B, B = 0x{self.B:02X}"
 
 # C4  2 2  ANDB #     --XX0-
 # D4  2 3  ANDB 0m    --XX0-
@@ -243,15 +327,15 @@ class CPU(object):
         elif self.instruction == 0x4F:
             self.A = 0
             self.evaluate_flags(self.A, "--0100")
-            if(self.debug):   print("CLRA\t\t; Clear register A, A = " + hex(self.A))
             self.PC += 1
+            return f"CLRA\t\t; Clear register A, A = 0x{self.A:02X}"
 
         # CLRB    Clear register B
         elif self.instruction == 0x5F:
             self.B = 0
             self.evaluate_flags(self.B, "--0100")
-            if(self.debug):   print("CLRB\t\t; Clear register B, B = " + hex(self.B))
             self.PC += 1
+            return f"CLRB\t\t; Clear register B, B = 0x{self.B:02X}"
 
 
 # 6F  2 5  CLR d,X    --0100   Clear register or byte in memory, making it 0.
@@ -261,8 +345,8 @@ class CPU(object):
 
         # JSR mm      Jump to a subroutine mm
         elif self.instruction == 0xBD:
-            PCH = self.prg[self.PC+1]   # calc jmp address
-            PCL = self.prg[self.PC+2]
+            PCH = self.code[self.PC+1]   # calc jmp address
+            PCL = self.code[self.PC+2]
             self.PC += 3
             self.RAM[self.SP] = self.PC & 0x00FF
             self.SP -= 1
@@ -270,7 +354,7 @@ class CPU(object):
             self.SP -= 1
             self.PC = PCH * 0x100
             self.PC += PCL
-            if(self.debug):   print("JSR $"  + hex(self.PC)[2:] + "\t; Jump to a subroutine mm ")
+            return f"JSR ${self.PC:04X}\t; Jump to a subroutine mm "
 
 
 
@@ -281,16 +365,16 @@ class CPU(object):
 
         # LDAA #    Loads register A with given byte
         elif self.instruction == 0x86:
-            self.A = self.prg[self.PC+1]
+            self.A = self.code[self.PC+1]
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("LDAA #$" + hex(self.prg[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
+            if(self.debug):   print("LDAA #$" + hex(self.code[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
             self.PC += 2
 
         # LDAA 0m   Loads register A with given byte
         elif self.instruction == 0x96:
-            self.A = self.RAM_read(self.prg[self.PC+1])
+            self.A = self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("LDAA $" + hex(self.prg[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
+            if(self.debug):   print("LDAA $" + hex(self.code[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
             self.PC += 2
 
 # 86  2 2  LDAA #     --XX0-   Loads register with given byte
@@ -300,16 +384,16 @@ class CPU(object):
 
         # LDAB #    Loads register B with given byte
         elif self.instruction == 0xC6:
-            self.B = self.prg[self.PC+1]
+            self.B = self.code[self.PC+1]
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("LDAB #$" + hex(self.prg[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
+            if(self.debug):   print("LDAB #$" + hex(self.code[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
             self.PC += 2
 
         # LDAB 0m
         elif self.instruction == 0xD6:
-            self.B = self.RAM_read(self.prg[self.PC+1])
+            self.B = self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("LDAB $" + hex(self.prg[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
+            if(self.debug):   print("LDAB $" + hex(self.code[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
             self.PC += 2
 
 # C6  2 2  LDAB #     --XX0-
@@ -324,11 +408,12 @@ class CPU(object):
 
         # LDS ##    Loads stack pointer with given word
         elif self.instruction == 0x8E:
-            self.SP = self.prg[self.PC+1]
-            self.SP *= 0x100
-            self.SP += self.prg[self.PC+2]
-            if(self.debug):   print("LDS #$" + hex(self.prg[self.PC+1])[2:] + hex(self.prg[self.PC+2])[2:] + "\t; Loads stack pointer with given word")
+            address = self.code[self.PC+1]
+            address *= 0x100
+            address += self.code[self.PC+2]
+            self.SP = address
             self.PC += 3
+            return f"LDS #${address:02X}\t; Loads stack pointer with given word"
 
 # 8E  3 3  LDS ##     --XX0-   Loads stack pointer with given word
 # 9E  2 4  LDS 0m     --XX0-
@@ -337,10 +422,10 @@ class CPU(object):
 
         # LDX ##    Loads X register with given word
         elif self.instruction == 0xCE:
-            self.X = self.prg[self.PC+1]
+            self.X = self.code[self.PC+1]
             self.X *= 0x100
-            self.X += self.prg[self.PC+2]
-            if(self.debug):   print("LDX #$" + hex(self.prg[self.PC+1])[2:] + hex(self.prg[self.PC+2])[2:] + "\t; Loads X register with given word")
+            self.X += self.code[self.PC+2]
+            if(self.debug):   print("LDX #$" + hex(self.code[self.PC+1])[2:] + hex(self.code[self.PC+2])[2:] + "\t; Loads X register with given word")
             self.PC += 3
 
 # CE  3 3  LDX ##     --XX0-   Loads X register with given word
@@ -362,9 +447,9 @@ class CPU(object):
 
         # STD 0m
         elif self.instruction == 0xDD:
-            self.RAM_write(self.prg[self.PC+1], self.A)
-            self.RAM_write(self.prg[self.PC+1]+1, self.B)
-            if(self.debug):   print("STD $" + hex(self.prg[self.PC+1])[2:] + "\t\t; Stores word register D at given address, " + hex(self.prg[self.PC+1]) + " = " + hex(self.A*0x100 + self.B))
+            self.RAM_write(self.code[self.PC+1], self.A)
+            self.RAM_write(self.code[self.PC+1]+1, self.B)
+            if(self.debug):   print("STD $" + hex(self.code[self.PC+1])[2:] + "\t\t; Stores word register D at given address, " + hex(self.code[self.PC+1]) + " = " + hex(self.A*0x100 + self.B))
             self.PC += 2
 
         # TSTA      N=1 if M7==1, Z=1 if M==0
@@ -381,11 +466,11 @@ class CPU(object):
         # BEQ      Branch if equal
         elif self.instruction == 0x27:
             if(self.Z == 1):    # is Zero - branch
-                if(self.prg[self.PC+1] & 0x80 == 0): # +r
-                    self.PC += self.prg[self.PC+1]
+                if(self.code[self.PC+1] & 0x80 == 0): # +r
+                    self.PC += self.code[self.PC+1]
                 else:
-                    address = self.prg[self.PC+1] & 0x7F    # clear sign
-                    self.PC -= self.prg[address]
+                    address = self.code[self.PC+1] & 0x7F    # clear sign
+                    self.PC -= self.code[address]
                 self.PC += 2
             else:               # Not Zero - continue
                 self.PC += 2
@@ -393,8 +478,8 @@ class CPU(object):
 
         # JMP      Jump to the address mm
         elif self.instruction == 0x7E:
-            PCH = self.prg[self.PC+1]
-            PCL = self.prg[self.PC+2]
+            PCH = self.code[self.PC+1]
+            PCL = self.code[self.PC+2]
             self.PC = PCH * 0x100
             self.PC += PCL
             if(self.debug):   print("JMP $"  + hex(self.PC)[2:] + "\t; Jump to the address mm")
