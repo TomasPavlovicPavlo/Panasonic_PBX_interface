@@ -365,17 +365,19 @@ class CPU(object):
 
         # LDAA #    Loads register A with given byte
         elif self.instruction == 0x86:
+            oldPC = self.PC
             self.A = self.code[self.PC+1]
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("LDAA #$" + hex(self.code[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
             self.PC += 2
+            return f"LDAA #${self.code[oldPC+1]:02X}\t; Loads register A with given byte, A = 0x{self.A:02X}"
 
         # LDAA 0m   Loads register A with given byte
         elif self.instruction == 0x96:
+            oldPC = self.PC
             self.A = self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.A, "--XX0-")
-            if(self.debug):   print("LDAA $" + hex(self.code[self.PC+1])[2:] + "\t; Loads register A with given byte, A = " + hex(self.A))
             self.PC += 2
+            return f"LDAA ${self.code[oldPC+1]:02X}\t; Loads register A with given byte, A = 0x{self.A:02X}"
 
 # 86  2 2  LDAA #     --XX0-   Loads register with given byte
 # 96  2 3  LDAA 0m    --XX0-
@@ -384,17 +386,19 @@ class CPU(object):
 
         # LDAB #    Loads register B with given byte
         elif self.instruction == 0xC6:
+            oldPC = self.PC
             self.B = self.code[self.PC+1]
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("LDAB #$" + hex(self.code[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
             self.PC += 2
+            return f"LDAB #${self.code[oldPC+1]:02X}\t; Loads register B with given byte, B = 0x{self.B:02X}"
 
         # LDAB 0m
         elif self.instruction == 0xD6:
+            oldPC = self.PC
             self.B = self.RAM_read(self.code[self.PC+1])
             self.evaluate_flags(self.B, "--XX0-")
-            if(self.debug):   print("LDAB $" + hex(self.code[self.PC+1])[2:] + "\t; Loads register B with given byte, B = " + hex(self.B))
             self.PC += 2
+            return f"LDAB ${self.code[oldPC+1]:02X}\t; Loads register B with given byte, B = 0x{self.B:02X}"
 
 # C6  2 2  LDAB #     --XX0-
 # D6  2 3  LDAB 0m    --XX0-
@@ -422,11 +426,12 @@ class CPU(object):
 
         # LDX ##    Loads X register with given word
         elif self.instruction == 0xCE:
+            oldPC = self.PC
             self.X = self.code[self.PC+1]
             self.X *= 0x100
             self.X += self.code[self.PC+2]
-            if(self.debug):   print("LDX #$" + hex(self.code[self.PC+1])[2:] + hex(self.code[self.PC+2])[2:] + "\t; Loads X register with given word")
             self.PC += 3
+            return f"LDX #${self.code[oldPC+1]:02X}{self.code[oldPC+2]:02X}\t; Loads X register with given word"
 
 # CE  3 3  LDX ##     --XX0-   Loads X register with given word
 # DE  2 4  LDX 0m     --XX0-
@@ -439,24 +444,25 @@ class CPU(object):
             self.A = mul
             self.A = self.A >> 8
             self.B = mul & 0x00FF
-            if(self.debug):   print("MUL\t\t; Multiply A and B, D = " + hex(mul))
             self.PC += 1
+            return f"MUL\t\t; Multiply A and B, D = 0x{mul:02X}"
 
 # 3D  1 7  MUL        -----b   Multiply A and B
 
 
         # STD 0m
         elif self.instruction == 0xDD:
+            oldPC = self.PC
             self.RAM_write(self.code[self.PC+1], self.A)
             self.RAM_write(self.code[self.PC+1]+1, self.B)
-            if(self.debug):   print("STD $" + hex(self.code[self.PC+1])[2:] + "\t\t; Stores word register D at given address, " + hex(self.code[self.PC+1]) + " = " + hex(self.A*0x100 + self.B))
             self.PC += 2
+            return f"STD ${self.code[oldPC+1]:02X}\t\t; Stores word register D at given address, 0x{self.code[oldPC+1]:02X} = 0x{(self.A*0x100 + self.B):04X}"
 
         # TSTA      N=1 if M7==1, Z=1 if M==0
         elif self.instruction == 0x4D:
             self.evaluate_flags(self.A, "--XX00")
-            if(self.debug):   print("TSTA\t\t; Test register A, Z = " + str(self.Z) + ", N = " + str(self.N))
             self.PC += 1
+            return f"TSTA\t\t; Test register A, Z = {self.Z}, N = {self.N}"
 
 # 6D  2 4  TST d,X    --XX00   Test register or byte in memory
 # 7D  3 4  TST mm     --XX00
@@ -474,7 +480,7 @@ class CPU(object):
                 self.PC += 2
             else:               # Not Zero - continue
                 self.PC += 2
-            if(self.debug):   print("BEQ $"  + hex(self.PC)[2:] + "\t; Branch if equal r")
+            return f"BEQ ${self.PC:04X}\t; Branch if equal r"
 
         # JMP      Jump to the address mm
         elif self.instruction == 0x7E:
@@ -482,7 +488,7 @@ class CPU(object):
             PCL = self.code[self.PC+2]
             self.PC = PCH * 0x100
             self.PC += PCL
-            if(self.debug):   print("JMP $"  + hex(self.PC)[2:] + "\t; Jump to the address mm")
+            return f"JMP ${self.PC:04X}\t; Jump to the address mm"
 
 
 

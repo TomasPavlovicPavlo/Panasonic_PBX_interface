@@ -28,5 +28,5 @@ cpu.reset() # set PC according to RESET vector
 while(1):
       debug = cpu.cycle()
       print(debug)
-      print_regs()
+    #   print_regs()
       
