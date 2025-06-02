@@ -14,22 +14,32 @@ _file = "test.json"
 
 inputFile = open(_file, "r")
 
-lines  = inputFile.readlines()
+lines  = inputFile.read()
 
 for line in lines:
-    elements = json.loads(line)
+    elements = json.loads(lines)
 
-    if "A" in elements:
-         cpu.A = int(elements["A"], 16)
-    if "B" in elements:
-         cpu.B = int(elements["B"], 16)
+    if "A" in elements["inputs"]:
+         cpu.A = int(elements["inputs"]["A"], 16)
+    if "B" in elements["inputs"]:
+         cpu.B = int(elements["inputs"]["B"], 16)
     if "opcode" in elements:
          cpu.code = [int(item, 16) for item in elements["opcode"]]
-    if "PC" in elements:
-         cpu.PC = int(elements["PC"], 16)
+    if "PC" in elements["inputs"]:
+         cpu.PC = int(elements["inputs"]["PC"], 16)
     debug = cpu.cycle()
     print(debug)
     print_regs()
+    if "A" in elements["outputs"]:
+         if(cpu.A != int(elements["outputs"]["A"], 16)):
+              raise Exception("A not OK")
+    if "B" in elements["outputs"]:
+         if(cpu.B != int(elements["outputs"]["B"], 16)):
+              raise Exception("B not OK")
+    if "PC" in elements["outputs"]:
+         if(cpu.PC != int(elements["outputs"]["PC"], 16)):
+              raise Exception("PC not OK")
+
 
     
 

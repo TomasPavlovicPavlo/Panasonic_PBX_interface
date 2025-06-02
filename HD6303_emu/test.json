@@ -1,2 +1,12 @@
-{"name": "ABA", "opcode": ["0x1B", "0xAB"], "PC": "0x0000", "A": "0xFF", "B": "0xAC"}
-{0x1B ABA 0x0000 0x80 0x80 }
+{
+    "0001":{
+        "name": "ABA", 
+        "opcode": ["0x1B", "0xAB"], 
+        "inputs": {"PC": "0x0000", "A": "0xFF", "B": "0xAC"}, 
+        "outputs": {"PC": "0x0001", "A": "0xAB", "B": "0xAC", "C": "1", "V": "1", "Z": "0", "N": "1", "I": "-", "H": "1"}},
+    "0002":{
+        "name": "ABA", 
+        "opcode": ["0x1B", "0xAB"], 
+        "inputs": {"PC": "0x0000", "A": "0xFF", "B": "0xAC"}, 
+        "outputs": {"PC": "0x0001", "A": "0xAB", "B": "0xAC", "C": "1", "V": "1", "Z": "0", "N": "1", "I": "-", "H": "1"}}
+}
